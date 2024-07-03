@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
-import Notifcation from "../notifcation/Notifcation";
+import Notifcation from "../notifcation/Notifcation"; // وارد کردن کامپوننت Notifcation
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +9,8 @@ import "./../butttons/Normal/NormalBtn.css";
 import Header from "../header/Header";
 
 const Start = () => {
-  const navigate = useNavigate(); // استفاده از useNavigate برای هدایت
+  const navigate = useNavigate();
+  const [notification, setNotification] = useState(null);
 
   const componentInputs = [
     {
@@ -35,15 +36,21 @@ const Start = () => {
         if (response.data.exists) {
           navigate("/register");
         } else {
-          <Notifcation content={`کد وارد شده صحیح نیست`} icon={`xmark`} />;
+          setNotification({
+            icon: "times",
+            content: "همچین کدی وجود ندارد.",
+            iconColor: "text-red-500",
+          });
+          setTimeout(() => setNotification(null), 3000);
         }
       })
-      .catch((error) => {
-        console.error("Error checking the code", error);
-        <Notifcation
-          content={`خطایی در ارتباط با سرور رخ داده است`}
-          icon={`xmark`}
-        />;
+      .catch(() => {
+        setNotification({
+          icon: "times",
+          content: "خطا در ارتباط با سرور.",
+          iconColor: "text-red-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       });
   };
 
@@ -62,6 +69,13 @@ const Start = () => {
           }
         />
       </div>
+      {notification && (
+        <Notifcation
+          icon={notification.icon}
+          content={notification.content}
+          iconColor={notification.iconColor}
+        />
+      )}
     </>
   );
 };

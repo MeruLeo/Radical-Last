@@ -1,11 +1,15 @@
+import { useState } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
+import Notifcation from "../notifcation/Notifcation";
 
 const Register = () => {
+  const [notification, setNotification] = useState(null);
+
   const componentInputs = [
     {
       title: "نام و نام خانوادگی",
@@ -34,15 +38,6 @@ const Register = () => {
         .required("این فیلد اجباری است"),
       initialValue: "",
     },
-    {
-      title: "کدملی",
-      name: "nationalcode",
-      type: "text",
-      validationSchema: Yup.string()
-        .matches(/^\d{10}$/, "لطفا کدملی معتبر وارد کنید")
-        .required("این فیلد اجباری است"),
-      initialValue: "",
-    },
   ];
 
   const navigate = useNavigate();
@@ -50,7 +45,6 @@ const Register = () => {
   const handleSubmit = (values) => {
     const { fullname, phonenumber, email, nationalcode } = values;
 
-    // ارسال درخواست به API Flask برای ذخیره اطلاعات کاربر
     axios
       .post("http://127.0.0.1:5000/api/register", {
         fullname,
@@ -60,14 +54,31 @@ const Register = () => {
       })
       .then((response) => {
         if (response.data.success) {
-          // اگر ثبت‌نام موفقیت‌آمیز بود، به صفحه مورد نظر هدایت شوید
           navigate("/services");
         } else {
-          // اگر ثبت‌نام ناموفق بود، پیغام خطا نمایش داده شود
-          console.error("Registration failed");
+          setNotification({
+            icon: "times",
+            content: "خطا در ثبت نام.",
+            iconColor: "text-red-500",
+          });
+          setTimeout(() => setNotification(null), 3000);
         }
       })
       .catch((error) => {
+        if (error.response && error.response.status === 409) {
+          setNotification({
+            icon: "times",
+            content: "ایمیل تکراری است. لطفا ایمیل دیگری وارد کنید.",
+            iconColor: "text-red-500",
+          });
+        } else {
+          setNotification({
+            icon: "times",
+            content: "خطا در ثبت نام.",
+            iconColor: "text-red-500",
+          });
+        }
+        setTimeout(() => setNotification(null), 3000);
         console.error("Error registering the user", error);
       });
   };
@@ -99,6 +110,13 @@ const Register = () => {
           />
         </main>
       </div>
+      {notification && (
+        <Notifcation
+          icon={notification.icon}
+          content={notification.content}
+          iconColor={notification.iconColor}
+        />
+      )}
     </>
   );
 };
