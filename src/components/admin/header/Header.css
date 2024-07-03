@@ -1,0 +1,13 @@
+.afterStyle::after {
+    content: "";
+    width: 30px;
+    height: 3px;
+    background-color: #DA0037;
+    position: absolute;
+    border-radius: 5rem;
+    bottom: -8%;
+    transform: translateX(-50%);
+    left: 50%;
+    text-shadow:  50px 50px 100px #570016,
+             -50px -50px 100px #ff0058;
+}

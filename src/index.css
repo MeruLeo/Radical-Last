@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "iran-sans";
+  src: url(assets/fonts/IranianSansBold.ttf);
+}
+@font-face {
+  font-family: "iran-sans-reg";
+  src: url(assets/fonts/IranianSansRegular.ttf);
+}
+
+body {
+  @apply bg-background-org font-iranSans;
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background-org;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-background-elm2 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #303030;
+}

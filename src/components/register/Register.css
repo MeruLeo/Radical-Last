@@ -1,0 +1,6 @@
+.boxsh {
+  border-radius: 50px;
+  box-shadow:
+    20px 20px 60px #b9002f,
+    -20px -20px 60px #fb003f;
+}
