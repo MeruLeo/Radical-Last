@@ -1,25 +1,25 @@
-import React from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import Input from "./input/Input";
-import NormalBtn from "../butttons/Normal/NormalBtn";
-import BigInput from "./input/BigInput";
+import BigInput from "./input/BigInput.jsx";
 
-const BingForm = ({ inputs, btn, onSubmit, formData, handleInputChange }) => {
-  const validationSchema = Yup.object(
+const BigForm = ({ inputs, btn, onSubmit }) => {
+  const validationSchema = Yup.object().shape(
     inputs.reduce((acc, input) => {
       acc[input.name] = input.validationSchema;
       return acc;
-    }, {}),
+    }, {})
   );
+
+  const initialValues = inputs.reduce((acc, input) => {
+    acc[input.name] = input.initialValue || "";
+    return acc;
+  }, {});
 
   return (
     <Formik
-      initialValues={formData}
+      initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={(values) => {
-        onSubmit(values);
-      }}
+      onSubmit={onSubmit}
     >
       {() => (
         <Form className="w-full max-w-sm mx-auto flex flex-col items-center">
@@ -29,8 +29,7 @@ const BingForm = ({ inputs, btn, onSubmit, formData, handleInputChange }) => {
                 title={input.title}
                 name={input.name}
                 type={input.type}
-                value={formData[input.name]}
-                onChange={handleInputChange}
+                generateValue={input.generateValue} // Pass generateValue to Input
               />
             </div>
           ))}
@@ -41,4 +40,4 @@ const BingForm = ({ inputs, btn, onSubmit, formData, handleInputChange }) => {
   );
 };
 
-export default BingForm;
+export default BigForm;

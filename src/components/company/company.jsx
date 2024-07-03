@@ -2,10 +2,8 @@ import React, { useState } from "react";
 import * as Yup from "yup";
 import axios from "axios";
 import Header from "../header/Header";
-import FormComponent from "../form/form";
 import NormalBtn from "../butttons/Normal/NormalBtn";
-import BingForm from "../form/BigForm";
-import BigInput from "../form/input/BigInput";
+import BigForm from "../form/BigForm";
 
 const CompanyInfo = () => {
   const [isChecked, setIsChecked] = useState([]);
@@ -24,33 +22,6 @@ const CompanyInfo = () => {
     forcustomers: "",
     strategy: "",
   });
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const InfoTemplate = ({ title, inputs, desc, descDisplay }) => {
-    return (
-      <div className="p-2 relative top-3">
-        <header className="text-background-white text-3xl">
-          <h2 className="mb-4 mt-10">{title}</h2>
-        </header>
-        <main>
-          <span
-            className={`${descDisplay} text-md bg-background-elm text-background-white rounded-full p-2`}
-          >
-            <i className="fa-solid fa-circle-info ml-2"></i>
-            {desc}
-          </span>
-          {inputs}
-        </main>
-      </div>
-    );
-  };
 
   const inputFieldes = [
     [
@@ -156,8 +127,72 @@ const CompanyInfo = () => {
     setIsChecked((prevChecked) =>
       prevChecked.includes(id)
         ? prevChecked.filter((checkedId) => checkedId !== id)
-        : [...prevChecked, id],
+        : [...prevChecked, id]
     );
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const companyInfo = {
+        ID_loginCode: localStorage.getItem("entercode"),
+        logo: isChecked.includes("option-1"),
+        color: isChecked.includes("option-3"),
+        slogan: isChecked.includes("option-2"),
+        personal_element: isChecked.includes("option-4"),
+        publicity: isChecked.includes("option-5"),
+      };
+
+      const productCoordinates = {
+        ID_loginCode: localStorage.getItem("entercode"),
+        mostPart_product: formData.productimportant,
+        strongPart_product: formData.strongers,
+        mostCompetitor_company: formData.theenemy,
+        bestPerformance_product: formData.forcustomers,
+        more_strategy: formData.strategy,
+      };
+
+      const informationCompany = {
+        ID_loginCode: localStorage.getItem("entercode"),
+        name: formData.companyname,
+        year: formData.yearofbi,
+        size: formData.sizeofcompany,
+        address: formData.address,
+        startedWork_market: formData.startedwork,
+        future_market: formData.eyework,
+        website: formData.website,
+      };
+
+      // Submit company info
+      await axios.post(
+        "http://localhost:5000/api/company_history",
+        companyInfo
+      );
+
+      // Submit product coordinates
+      await axios.post(
+        "http://localhost:5000/api/product_coordinates",
+        productCoordinates
+      );
+
+      // Submit company information
+      await axios.post(
+        "http://localhost:5000/api/information_company",
+        informationCompany
+      );
+
+      // Handle file upload
+      if (selectedFile !== "No file chosen") {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", selectedFile);
+        await axios.post("http://localhost:5000/api/uploadpdf", uploadFormData);
+      }
+
+      alert("اطلاعات با موفقیت ارسال شد");
+    } catch (error) {
+      console.error("Error submitting data: ", error);
+      alert("خطایی در ارسال اطلاعات رخ داد");
+    }
   };
 
   const CheckBox = ({ title, id }) => {
@@ -205,22 +240,21 @@ const CompanyInfo = () => {
     );
   };
 
-  const CompanyInformation = () => {
+  const InfoTemplate = ({ title, inputs, desc, descDisplay }) => {
     return (
-      <div className="relative top-10">
-        <InfoTemplate
-          title="مشخصات شرکت"
-          descDisplay="hidden"
-          inputs={
-            <ul>
-              <FormComponent
-                inputs={inputFieldes[1]}
-                handleInputChange={handleInputChange}
-                formData={formData}
-              />
-            </ul>
-          }
-        />
+      <div className="p-2 relative top-3 mb-4">
+        <header className="text-background-white text-3xl">
+          <h2 className="mb-4 mt-10">{title}</h2>
+        </header>
+        <main>
+          <span
+            className={`${descDisplay} text-md bg-background-elm text-background-white rounded-full p-2`}
+          >
+            <i className="fa-solid fa-circle-info ml-2"></i>
+            {desc}
+          </span>
+          {inputs}
+        </main>
       </div>
     );
   };
@@ -231,13 +265,6 @@ const CompanyInfo = () => {
         <InfoTemplate
           title="مختصات محصول"
           desc="به سوالات زیر پاسخ ترجیحا کوتاه یا متوسط بدهید."
-          inputs={
-            <BingForm
-              inputs={inputFieldes[2]}
-              handleInputChange={handleInputChange}
-              formData={formData}
-            />
-          }
         />
       </>
     );
@@ -248,13 +275,6 @@ const CompanyInfo = () => {
       <>
         <InfoTemplate
           title="استراتژی بازاریابی شما"
-          inputs={
-            <BingForm
-              inputs={inputFieldes[3]}
-              handleInputChange={handleInputChange}
-              formData={formData}
-            />
-          }
           desc="هر مورد که بالا نمی شد توضیح بدید،در کنار بازاریابیتون بنویسید."
         />
       </>
@@ -272,91 +292,28 @@ const CompanyInfo = () => {
               <input
                 type="file"
                 id="custom-input"
-                onChange={(e) => setSelectedFile(e.target.files[0].name)}
+                onChange={(e) =>
+                  setSelectedFile(e.target.files[0] || "هنوز فایلی انتخاب نشده")
+                }
                 hidden
               />
               <label
                 htmlFor="custom-input"
                 className="block text-sm text-background-org mr-4 py-2 px-4
-              rounded-md border-0 font-semibold bg-background-elm
-              hover:bg-background-white transition-all duration-200 cursor-pointer"
+                rounded-md border-0 font-semibold bg-background-elm
+                hover:bg-background-white transition-all duration-200 cursor-pointer"
               >
                 <i className="fa-solid fa-paperclip ml-2"></i>
                 انتخاب فایل
               </label>
               <label className="text-sm text-background-elm">
-                {selectedFile}
+                {selectedFile.name || "هنوز فایلی انتخاب نشده"}
               </label>
             </div>
           </form>
         }
       />
     );
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // جلوگیری از عملکرد پیش‌فرض فرم
-
-    try {
-      const companyInfo = {
-        ID_loginCode: localStorage.getItem("entercode"),
-        logo: isChecked.includes("option-1"),
-        color: isChecked.includes("option-3"),
-        slogan: isChecked.includes("option-2"),
-        personal_element: isChecked.includes("option-4"),
-        publicity: isChecked.includes("option-5"),
-      };
-
-      const productCoordinates = {
-        ID_loginCode: localStorage.getItem("entercode"),
-        mostPart_product: formData.productimportant,
-        strongPart_product: formData.strongers,
-        mostCompetitor_company: formData.theenemy,
-        bestPerformance_product: formData.forcustomers,
-        more_strategy: formData.strategy,
-      };
-
-      const informationCompany = {
-        ID_loginCode: localStorage.getItem("entercode"),
-        name: formData.companyname,
-        year: formData.yearofbi,
-        size: formData.sizeofcompany,
-        address: formData.address,
-        startedWork_market: formData.startedwork,
-        future_market: formData.eyework,
-        website: formData.website,
-      };
-
-      // Submit company info
-      await axios.post(
-        "http://localhost:5000/api/company_history",
-        companyInfo,
-      );
-
-      // Submit product coordinates
-      await axios.post(
-        "http://localhost:5000/api/product_coordinates",
-        productCoordinates,
-      );
-
-      // Submit company information
-      await axios.post(
-        "http://localhost:5000/api/information_company",
-        informationCompany,
-      );
-
-      // Handle file upload
-      if (selectedFile !== "No file chosen") {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        await axios.post("http://localhost:5000/api/uploadpdf", formData);
-      }
-
-      alert("اطلاعات با موفقیت ارسال شد");
-    } catch (error) {
-      console.error("Error submitting data: ", error);
-      alert("خطایی در ارسال اطلاعات رخ داد");
-    }
   };
 
   return (
@@ -368,11 +325,27 @@ const CompanyInfo = () => {
           <form onSubmit={handleSubmit}>
             <HistoryOfCompany />
             <ProductCoordinates />
+            <BigForm
+              inputs={inputFieldes[2]}
+              handleInputChange={(e) =>
+                setFormData({ ...formData, [e.target.name]: e.target.value })
+              }
+              formData={formData}
+            />
             <Strategy />
+            <BigForm
+              inputs={inputFieldes[3]}
+              handleInputChange={(e) =>
+                setFormData({ ...formData, [e.target.name]: e.target.value })
+              }
+              formData={formData}
+            />
             <PdfInput />
-            <FormComponent
+            <BigForm
               inputs={inputFieldes[1]}
-              handleInputChange={handleInputChange}
+              handleInputChange={(e) =>
+                setFormData({ ...formData, [e.target.name]: e.target.value })
+              }
               formData={formData}
               btn={<NormalBtn title="ثبت اطلاعات" />}
             />

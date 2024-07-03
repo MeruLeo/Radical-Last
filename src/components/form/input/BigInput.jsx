@@ -24,8 +24,8 @@ const BigInput = ({ title, type, value, onChange, ...props }) => {
         type={type}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        value={value} // Use value prop
-        onChange={onChange} // Use onChange prop
+        value={value}
+        onChange={onChange}
         className={`w-96 p-2 text-background-white rounded-lg border-2 bg-transparent transition-all duration-200 outline-none ${
           isFocus ? "border-background-elm" : "border-background-elm2"
         }`}
