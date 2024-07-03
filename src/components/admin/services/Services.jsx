@@ -5,6 +5,9 @@ import EnterCode from "../elements/EnterCode";
 import ContextMenu from "../elements/ContextMenu";
 import formatPrice from "../../formatingPrice";
 import "./Services.css";
+import FormComponent from "../../form/form";
+import NormalBtn from "../../butttons/Normal/NormalBtn";
+import * as Yup from "yup";
 
 const HeaderServices = () => {
   const [selected, setSelected] = useState("actives");
@@ -74,6 +77,23 @@ const HeaderServices = () => {
     },
   ];
 
+  const componentInputs = [
+    {
+      title: "عنوان سرویس",
+      name: "service-title",
+      type: "text",
+      validationSchema: Yup.string().required("این فیلد اجباری است"),
+      initialValue: "",
+    },
+    {
+      title: "قیمت سرویس",
+      name: "service-price",
+      type: "number",
+      validationSchema: Yup.string().required("این فیلد اجباری است"),
+      initialValue: "",
+    },
+  ];
+
   return (
     <>
       <AdminHeader />
@@ -107,7 +127,10 @@ const HeaderServices = () => {
         </ul>
       ) : (
         <div className="relative top-56">
-          <h1>true</h1>
+          <FormComponent
+            inputs={componentInputs}
+            btn={<NormalBtn title={`ثبت`} />}
+          />
         </div>
       )}
     </>
