@@ -112,10 +112,26 @@ const EnterCodes = () => {
               {
                 title: "کد ورود جدید",
                 name: "new-enter-code",
-                type: "text",
-                validationSchema: Yup.string()
+                type: "number",
+                validationSchema: Yup.number()
                   .min(5, "لطفا پنج عدد وارد کنید")
                   .max(5, "لطفا پنج عدد وارد کنید")
+                  .required("این فیلد اجباری است"),
+                initialValue: generatedCode || "", // Display generated code if available
+              },
+              {
+                title: "تعداد نفرات",
+                name: "count-people",
+                type: "number",
+                validationSchema: Yup.number()
+                  .required("این فیلد اجباری است"),
+                initialValue: generatedCode || "", // Display generated code if available
+              },
+              {
+                title: "تاریخ اعتبار",
+                name: "date-limit",
+                type: "date",
+                validationSchema: Yup.string()
                   .required("این فیلد اجباری است"),
                 initialValue: generatedCode || "", // Display generated code if available
               },
