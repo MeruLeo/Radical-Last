@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from 'axios'; // اضافه کردن axios برای درخواست‌های HTTP
 import Toggle from "../../toggle/Toggle";
 import AdminHeader from "../header/Header";
 import EnterCode from "../elements/EnterCode";
@@ -16,39 +17,24 @@ const EnterCodes = () => {
     currentItem: null,
   });
 
+  const [loginCodes, setLoginCodes] = useState([]);
+
+  useEffect(() => {
+    // Function to fetch login codes data from API
+    const fetchLoginCodes = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/admin_loginCode');
+        setLoginCodes(response.data);
+      } catch (error) {
+        console.error('Error fetching login codes:', error);
+      }
+    };
+
+    fetchLoginCodes();
+  }, []);
+
   // State to hold generated code
   const [generatedCode, setGeneratedCode] = useState(null);
-
-  const enterCodesValues = [
-    {
-      title: "19456",
-      userLimit: 60,
-      currentUsers: 60,
-      dateLimit: "1403/04/13",
-      canEdit: false,
-    },
-    {
-      title: "12345",
-      userLimit: 10,
-      currentUsers: 1,
-      dateLimit: "1403/06/03",
-      canEdit: false,
-    },
-    {
-      title: "76835",
-      userLimit: 7,
-      currentUsers: 3,
-      dateLimit: "1403/12/01",
-      canEdit: false,
-    },
-    {
-      title: "95334",
-      userLimit: 25,
-      currentUsers: 20,
-      dateLimit: "1403/04/05",
-      canEdit: false,
-    },
-  ];
 
   const handleContextMenu = (x, y, currentItem) => {
     setContextMenu({
@@ -61,7 +47,7 @@ const EnterCodes = () => {
 
   const generateCode = () => {
     const randomCode = Math.floor(10000 + Math.random() * 90000);
-    return randomCode
+    return randomCode;
   };
 
   const contextMenuValues = [
@@ -107,13 +93,13 @@ const EnterCodes = () => {
               contextMenuValues={contextMenuValues}
             />
           )}
-          {enterCodesValues.map((enterCodesValue, index) => (
+          {loginCodes.map((loginCode, index) => (
             <EnterCode
               key={index}
-              title={enterCodesValue.title}
-              userLimit={enterCodesValue.userLimit}
-              currentUsers={enterCodesValue.currentUsers}
-              dateLimit={enterCodesValue.dateLimit}
+              title={loginCode.loginCode_ID}
+              userLimit={loginCode.number_loginCode}
+              currentUsers={loginCode.numberLimit_loginCode}
+              dateLimit={loginCode.endDate_loginCode}
               onContextMenu={handleContextMenu}
               renderAdditionalContent={() => <span></span>}
             />

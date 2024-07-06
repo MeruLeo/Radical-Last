@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import axios from 'axios'; // اضافه کردن axios برای درخواست‌های HTTP
 import Toggle from "../../toggle/Toggle";
 import AdminHeader from "../header/Header";
 import EnterCode from "../elements/EnterCode";
@@ -17,37 +18,21 @@ const OfferCodes = () => {
   });
 
   const [generatedCode, setGeneratedCode] = useState(null);
+  const [offerCodes, setOfferCodes] = useState([]); // اضافه کردن حالت برای نگهداری داده‌های دریافت شده
 
-  const enterCodesValues = [
-    {
-      title: "A532l",
-      userLimit: 100,
-      currentUsers: 60,
-      dateLimit: "1403/04/13",
-      canEdit: false,
-    },
-    {
-      title: "MK099",
-      userLimit: 25,
-      currentUsers: 10,
-      dateLimit: "1403/06/03",
-      canEdit: false,
-    },
-    {
-      title: "T77TY",
-      userLimit: 50,
-      currentUsers: 3,
-      dateLimit: "1403/12/01",
-      canEdit: false,
-    },
-    {
-      title: "RAR43",
-      userLimit: 20,
-      currentUsers: 20,
-      dateLimit: "1403/04/05",
-      canEdit: false,
-    },
-  ];
+  useEffect(() => {
+    // Function to fetch offer codes data from API
+    const fetchOfferCodes = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/admin_offerCode');
+        setOfferCodes(response.data);
+      } catch (error) {
+        console.error('Error fetching offer codes:', error);
+      }
+    };
+
+    fetchOfferCodes();
+  }, []);
 
   const handleContextMenu = (x, y, currentItem) => {
     setContextMenu({
@@ -111,13 +96,13 @@ const OfferCodes = () => {
               contextMenuValues={contextMenuValues}
             />
           )}
-          {enterCodesValues.map((enterCodesValue, index) => (
+          {offerCodes.map((offerCode, index) => (
             <EnterCode
               key={index}
-              title={enterCodesValue.title}
-              userLimit={enterCodesValue.userLimit}
-              currentUsers={enterCodesValue.currentUsers}
-              dateLimit={enterCodesValue.dateLimit}
+              title={offerCode.offerCode_ID}
+              userLimit={offerCode.number_offerCode}
+              currentUsers={offerCode.numberLimit_offerCode}
+              dateLimit={offerCode.endDate_offerCode}
               onContextMenu={handleContextMenu}
               renderAdditionalContent={() => <span></span>}
             />

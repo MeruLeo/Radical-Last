@@ -177,5 +177,82 @@ def get_orders():
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while fetching orders'}), 500
     
+#-----------------------------------------------------
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/admin_loginCode', methods=['GET'])
+def get_loginCode():
+    try:
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        query = '''
+        SELECT ID, number, number_limit, end_date
+        FROM login_code
+        '''
+        cursor.execute(query)
+        show_loginCode = []
+        for row in cursor.fetchall():
+            login_code = {
+                'loginCode_ID': row.ID,
+                'number_loginCode': row.number,
+                'numberLimit_loginCode': row.number_limit,
+                'endDate_loginCode': row.end_date,
+            }
+            show_loginCode.append(login_code)
+        
+        cursor.close()
+        conn.close()
+        return jsonify(show_loginCode), 200
+    
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'error': 'An error occurred while fetching login codes'}), 500
+#-------------------------------------------------------------------------------
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/admin_offerCode', methods=['GET'])
+def get_offerCode():
+    try:
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        query = '''
+        SELECT ID, number, number_limit, end_date
+        FROM offer_code
+        '''
+        cursor.execute(query)
+        show_offerCode = []
+        for row in cursor.fetchall():
+            offer_code = {
+                'offerCode_ID': row.ID,
+                'number_offerCode': row.number,
+                'numberLimit_offerCode': row.number_limit,
+                'endDate_offerCode': row.end_date,
+            }
+            show_offerCode.append(offer_code)
+        
+        cursor.close()
+        conn.close()
+        return jsonify(show_offerCode), 200
+    
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'error': 'An error occurred while fetching login codes'}), 500
+#------------------------------------------------------------------------------
+
+    
 if __name__ == '__main__':
     app.run(debug=True)
