@@ -253,6 +253,33 @@ def get_offerCode():
         return jsonify({'error': 'An error occurred while fetching login codes'}), 500
 #------------------------------------------------------------------------------
 
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/save_loginCode', methods=['POST'])
+def save_login_code():
+    data = request.get_json()
+    login_code_id = data.get('ID')
+    number = data.get('number')
+    end_date = data.get('end_date')
+
+    cursor = conn_str.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO login_code (ID, number, end_date)
+            VALUES (?, ?, ?)
+        ''', (login_code_id, number, end_date))
+        conn_str.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
     
 if __name__ == '__main__':
     app.run(debug=True)

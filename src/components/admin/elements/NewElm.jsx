@@ -5,7 +5,7 @@ export const NewElm = ({ input, submitNew, clickEvent }) => {
   return (
     <FormComponent
       inputs={input}
-      btn={<NormalBtn title={`ثبت`} path={submitNew} />}
+      btn={<NormalBtn title={`ثبت`} path={submitNew} clickEvent={clickEvent}/>}
     />
   );
 };

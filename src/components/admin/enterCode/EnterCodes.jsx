@@ -73,6 +73,29 @@ const EnterCodes = () => {
     },
   ];
 
+  const handleSubmit = async (formData) => {
+    const { new_enter_code, count_people, date_limit } = formData;
+  
+    try {
+      const response = await axios.post('http://localhost:5000/api/save_loginCode', {
+        ID: new_enter_code,
+        number: count_people,
+        end_date: date_limit,
+      });
+  
+      if (response.data.success) {
+        // Handle success scenario (e.g., show success message)
+        console.log('Login code saved successfully');
+      } else {
+        // Handle failure scenario (e.g., show error message)
+        console.error('Failed to save login code');
+      }
+    } catch (error) {
+      console.error('Error while saving login code:', error);
+    }
+  };
+  
+
   return (
     <>
       <AdminHeader />
@@ -108,10 +131,11 @@ const EnterCodes = () => {
       ) : (
         <div className="relative top-56 flex flex-col justify-center items-center">
           <NewElm
+            clickEvent={handleSubmit}
             input={[
               {
                 title: "کد ورود جدید",
-                name: "new-enter-code",
+                name: "new_enter_code",
                 type: "number",
                 validationSchema: Yup.number()
                   .min(5, "لطفا پنج عدد وارد کنید")
@@ -121,7 +145,7 @@ const EnterCodes = () => {
               },
               {
                 title: "تعداد نفرات",
-                name: "count-people",
+                name: "count_people",
                 type: "number",
                 validationSchema: Yup.number()
                   .required("این فیلد اجباری است"),
@@ -129,7 +153,7 @@ const EnterCodes = () => {
               },
               {
                 title: "تاریخ اعتبار",
-                name: "date-limit",
+                name: "date_limit",
                 type: "date",
                 validationSchema: Yup.string()
                   .required("این فیلد اجباری است"),
@@ -138,6 +162,7 @@ const EnterCodes = () => {
             ]}
             submitNew={`#`}
           />
+
           <MagicBtn title={`ساخت خودکار`} autoCode={generateCode} />
         </div>
       )}
