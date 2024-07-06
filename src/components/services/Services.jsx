@@ -34,6 +34,22 @@ const Services = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Read checked services from localStorage
+    const storedCheckedServices = JSON.parse(localStorage.getItem("checkedServices")) || [];
+    setCheckedServices(storedCheckedServices);
+
+    // Calculate total price based on checked services
+    let totalPrice = 0;
+    storedCheckedServices.forEach((serviceId) => {
+      const service = ourServices[serviceId];
+      if (service) {
+        totalPrice += service.price;
+      }
+    });
+    setTotalPrice(totalPrice);
+  }, [ourServices]);
+
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
@@ -42,10 +58,14 @@ const Services = () => {
     setCheckedServices((prevCheckedServices) => {
       if (prevCheckedServices.includes(id)) {
         setTotalPrice(totalPrice - price);
-        return prevCheckedServices.filter((serviceId) => serviceId !== id);
+        const updatedServices = prevCheckedServices.filter((serviceId) => serviceId !== id);
+        localStorage.setItem("checkedServices", JSON.stringify(updatedServices));
+        return updatedServices;
       } else {
         setTotalPrice(totalPrice + price);
-        return [...prevCheckedServices, id];
+        const updatedServices = [...prevCheckedServices, id];
+        localStorage.setItem("checkedServices", JSON.stringify(updatedServices));
+        return updatedServices;
       }
     });
   };
@@ -94,7 +114,7 @@ const Services = () => {
           {ourServices.map((service, index) => (
             <Service
               key={index}
-              id={index}
+              id={service.id}
               title={service.title}
               price={service.price}
             />
@@ -118,7 +138,7 @@ const Services = () => {
           </section>
         </div>
         <div className="absolute top-[37rem] right-[50%] translate-x-[50%]">
-          <NormalBtn title={"پرداخت"} path={"/"} />
+          <NormalBtn title={"پرداخت"} path={"/orders"} />
         </div>
       </div>
     );
@@ -135,6 +155,7 @@ const Services = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data.discount_price) {
+          localStorage.setItem('offerCode', values.discountcode);
           setDiscount(data.discount_price);
           setDiscountError("");
         } else {

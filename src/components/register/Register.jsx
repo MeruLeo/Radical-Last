@@ -43,17 +43,17 @@ const Register = () => {
   const navigate = useNavigate();
 
   const handleSubmit = (values) => {
-    const { fullname, phonenumber, email, nationalcode } = values;
+    const { fullname, phonenumber, email } = values;
 
     axios
       .post("http://127.0.0.1:5000/api/register", {
         fullname,
         phonenumber,
         email,
-        nationalcode,
       })
       .then((response) => {
         if (response.data.success) {
+          localStorage.setItem("userId", response.data.id);
           navigate("/services");
         } else {
           setNotification({
