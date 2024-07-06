@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useField, useFormikContext } from "formik";
 import "./Input.css";
 
-const Input = ({ title, type, generateValue, ...props }) => {
+const Input = ({ title, type, generateValue, display, ...props }) => {
   const [field, meta] = useField(props);
   const [isFocus, setIsFocus] = useState(false);
   const { values } = useFormikContext();
@@ -22,7 +22,7 @@ const Input = ({ title, type, generateValue, ...props }) => {
     generateValue !== undefined ? generateValue : field.value;
 
   return (
-    <div className="mt-4 relative font-iranSansReg">
+    <div className={`mt-4 relative ${display} font-iranSansReg`}>
       <input
         {...field}
         {...props}

@@ -31,7 +31,8 @@ const FormComponent = ({ inputs, btn, onSubmit }) => {
                 title={input.title}
                 name={input.name}
                 type={input.type}
-                generateValue={input.generateValue} // Pass generateValue to Input
+                generateValue={input.generateValue}
+                display={input.display}
               />
             </div>
           ))}

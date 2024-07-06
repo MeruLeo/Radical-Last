@@ -8,10 +8,10 @@ CORS(app, resources={r"/*": {"origins": "*"}})  # اضافه کردن CORS با 
 # تنظیمات اتصال به SQL Server
 conn = pyodbc.connect(
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
+    'SERVER=DESKTOP-NL7MQT0;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2023'
+    'PWD=@Hossein2021'
 )
 
 @app.route('/api/check_code', methods=['POST'])
@@ -32,10 +32,10 @@ def check_code():
 def get_services():
     conn = pyodbc.connect(
         'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-KAQD1TM;'
+        'SERVER=DESKTOP-NL7MQT0;'
         'DATABASE=radical;'
         'UID=sa;'
-        'PWD=@Hossein2023'
+        'PWD=@Hossein2021'
     )
     cursor = conn.cursor()
     cursor.execute("SELECT ID, name, price FROM services")
@@ -55,10 +55,10 @@ def services():
 def check_discount_code(code):
     conn = pyodbc.connect(
         'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-KAQD1TM;'
+        'SERVER=DESKTOP-NL7MQT0;'
         'DATABASE=radical;'
         'UID=sa;'
-        'PWD=@Hossein2023'
+        'PWD=@Hossein2021'
     )
     cursor = conn.cursor()
     cursor.execute("SELECT offer_price FROM offer_code WHERE ID=?", code)
@@ -82,10 +82,10 @@ def check_discount():
     
 conn = pyodbc.connect(
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
+    'SERVER=DESKTOP-NL7MQT0;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2023'
+    'PWD=@Hossein2021'
 )
 
 @app.route('/api/register', methods=['POST'])
@@ -113,6 +113,69 @@ def register_user():
     return jsonify({'success': True, 'id': inserted_id})
 #-------------------------------------------------------------------------------
 
+@app.route('/api/orders', methods=['POST'])
+def save_order():
+    data = request.get_json()
+    user_id = data.get('userId')
+    entry_code = data.get('enterCode')
+    checked_services = data.get('checkServices')
+    offer_code = data.get('offerCode')
 
+    cursor = conn.cursor()
+    try:
+        # Insert the order into the database
+        cursor.execute('''
+            INSERT INTO orders (ID_user, ID_services, ID_loginCode, ID_offerCode)
+            VALUES (?, ?, ?, ?)
+        ''', (user_id, ','.join(map(str, checked_services)), entry_code, offer_code))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+#-------------------------------------------------------------------
+
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+
+@app.route('/api/orders', methods=['GET'])
+def get_orders():
+    try:
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        query = '''
+        SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, oc.offer_price
+        FROM orders o
+        JOIN services s ON o.ID_service = s.ID
+        JOIN offer_code oc ON o.ID_offerCode = oc.ID 
+        '''
+        cursor.execute(query)
+        orders = []
+        for row in cursor.fetchall():
+            order = {
+                'ID_offerCode': row.ID_offerCode,
+                'ID_loginCode': row.ID_loginCode,
+                'service_name': row.service_name,
+                'service_price': row.service_price,
+                'reg_date': row.reg_date,
+                'disCount_value':row.offer_price,
+            }
+            orders.append(order)
+        
+        cursor.close()
+        conn.close()
+        return jsonify(orders), 200
+    
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'error': 'An error occurred while fetching orders'}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True)

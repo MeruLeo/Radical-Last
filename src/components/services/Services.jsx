@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
 import * as Yup from "yup";
+import Notifcation from "../notifcation/Notifcation";
 
 const Services = () => {
   const [discount, setDiscount] = useState(0);
@@ -12,9 +13,9 @@ const Services = () => {
   const [ourServices, setOurServices] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [entryCode, setEntryCode] = useState("");
+  const [notification, setNotifcation] = useState(null);
 
   useEffect(() => {
-    // Fetch services from API
     fetch("http://localhost:5000/api/services")
       .then((response) => {
         if (!response.ok) {
@@ -27,7 +28,6 @@ const Services = () => {
   }, []);
 
   useEffect(() => {
-    // Read entry code from localStorage
     const storedEntryCode = localStorage.getItem("entercode");
     if (storedEntryCode) {
       setEntryCode(storedEntryCode);
@@ -35,11 +35,9 @@ const Services = () => {
   }, []);
 
   useEffect(() => {
-    // Read checked services from localStorage
     const storedCheckedServices = JSON.parse(localStorage.getItem("checkedServices")) || [];
     setCheckedServices(storedCheckedServices);
 
-    // Calculate total price based on checked services
     let totalPrice = 0;
     storedCheckedServices.forEach((serviceId) => {
       const service = ourServices[serviceId];
@@ -107,6 +105,52 @@ const Services = () => {
     );
   };
 
+  const saveOrder = () => {
+    const orderDetails = {
+      offerCode: Number(localStorage.getItem('offerCode')),
+      userId: Number(localStorage.getItem('userId')),
+      entryCode: Number(localStorage.getItem('entercode')),
+      checkedServices: JSON.parse(localStorage.getItem('checkedServices')),
+      totalPrice: totalPrice - discount,
+    };
+
+    fetch("http://localhost:5000/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderDetails),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          setNotifcation({
+            icon: "check",
+            content: "سفارش با موفقیت ثبت شد.",
+            iconColor: "text-green-500",
+          });
+          setTimeout(() => setNotifcation(null), 3000);
+        } else {
+          setNotifcation({
+            icon: "xmark",
+            content: "خطایی در ثبت سفارش رخ داد.",
+            iconColor: "text-red-500",
+          });
+          setTimeout(() => setNotifcation(null), 3000);
+        }
+      })
+      .catch((error) => {
+        console.error("Error saving order:", error);
+        setNotifcation({
+          icon: "xmark",
+          content: "خطایی در ثبت سفارش رخ داد.",
+          iconColor: "text-red-500",
+        });
+        setTimeout(() => setNotifcation(null), 3000);
+      });
+  };
+
+
   const ServicesWrapper = () => {
     return (
       <div>
@@ -138,11 +182,13 @@ const Services = () => {
           </section>
         </div>
         <div className="absolute top-[37rem] right-[50%] translate-x-[50%]">
-          <NormalBtn title={"پرداخت"} path={"/orders"} />
+          <FormComponent onSubmit={saveOrder} btn={<NormalBtn title={`پرداخت`}/>} inputs={componentInputs1}/>
         </div>
       </div>
     );
   };
+
+  
 
   const applyDiscount = (values) => {
     fetch("http://localhost:5000/api/check_discount", {
@@ -158,8 +204,19 @@ const Services = () => {
           localStorage.setItem('offerCode', values.discountcode);
           setDiscount(data.discount_price);
           setDiscountError("");
+          setNotifcation({
+            icon: "check",
+            content: "کد تخفیف اعمال شد.",
+            iconColor: "text-green-500",
+          });
+          setTimeout(() => setNotifcation(null), 3000);
         } else {
-          setDiscountError(data.error || "Error applying discount");
+          setNotifcation({
+            icon: "times",
+            content: "کد تخفیف اشتباه است.",
+            iconColor: "text-green-500",
+          });
+          setTimeout(() => setNotifcation(null), 3000);
         }
       })
       .catch((error) => {
@@ -224,6 +281,16 @@ const Services = () => {
       initialValue: "",
     },
   ];
+  const componentInputs1 = [
+    {
+      title: "کد تخفیف",
+      name: "discountcode",
+      type: "text",
+      validationSchema: "",
+      initialValue: "",
+      display: "hidden"
+    },
+  ];
 
   const DiscountCode = () => {
     return (
@@ -237,12 +304,23 @@ const Services = () => {
       </div>
     );
   };
+  const offerCode = Number(localStorage.getItem('offerCode'));
+  const userId = Number(localStorage.getItem('userId'));
+  const enterCode = Number(localStorage.getItem('entercode'));
+  const check = JSON.stringify(localStorage.getItem('checkedServices'));
 
   return (
     <>
       <Toggle />
       {selected === "services" && <ServicesWrapper />}
       {selected === "offer" && <DiscountCode />}
+      {notification && (
+        <Notifcation
+          icon={notification.icon}
+          content={notification.content}
+          iconColor={notification.iconColor}
+        />
+      )}
     </>
   );
 };
