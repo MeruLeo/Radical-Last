@@ -53,6 +53,24 @@ const OfferCodes = () => {
     return code;
   };
 
+  const handleSubmit = async (values) => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/save_offerCode', {
+        ID: values["new-offer-code"],
+        number: values["count-people1"],
+        end_date: values["end_date"],
+        off_price: values["offer_price"]
+      });
+      if (response.data.success) {
+        alert("Offer code saved successfully!");
+      } else {
+        alert("Error saving offer code: " + response.data.error);
+      }
+    } catch (error) {
+      console.error('Error saving offer code:', error);
+    }
+  };
+
   const contextMenuValues = [
     {
       title: "ویرایش",
@@ -111,16 +129,41 @@ const OfferCodes = () => {
       ) : (
         <div className="relative top-56 flex flex-col justify-center items-center">
           <NewElm
+            clickEvent={handleSubmit}
             input={[
               {
-                title: "کد ورود جدید",
-                name: "new-enter-code",
+                title: "کد تخفیف جدید",
+                name: "new-offer-code",
                 type: "text",
                 validationSchema: Yup.string()
                   .min(5, "لطفا پنج عدد وارد کنید")
                   .max(5, "لطفا پنج عدد وارد کنید")
                   .required("این فیلد اجباری است"),
                 initialValue: generatedCode || "", // Display generated code if available
+              },
+              {
+                title: "تعداد نفرات",
+                name: "count-people1",
+                type: "number",
+                validationSchema: Yup.number()
+                  .required("این فیلد اجباری است"),
+                initialValue: "", // Default value
+              },
+              {
+                title: "قیمت تخفیف",
+                name: "offer_price",
+                type: "number",
+                validationSchema: Yup.number()
+                  .required("این فیلد اجباری است"),
+                initialValue: "", // Default value
+              },
+              {
+                title: "تاریخ اعتبار",
+                name: "end_date",
+                type: "date",
+                validationSchema: Yup.string()
+                  .required("این فیلد اجباری است"),
+                initialValue: "", // Default value
               },
             ]}
             submitNew={`#`}

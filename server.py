@@ -260,7 +260,7 @@ def save_login_code():
     login_code_id = data.get('ID')
     number = data.get('number')
     end_date = data.get('end_date')
-    num_limit = data.get('number_limit')
+    num_limit = 0
 
     # تبدیل تاریخ به فرمت صحیح برای دیتابیس
     formatted_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
@@ -286,7 +286,41 @@ def save_login_code():
     except pyodbc.Error as e:
         print(f"Error: {str(e)}")  # چاپ خطا
         return jsonify({'success': False, 'error': str(e)})
+#----------------------------------------------------------------
+@app.route('/api/save_offerCode', methods=['POST'])
+def save_offer_code():
+    data = request.get_json()
+    offer_code_id = data.get('ID')
+    number = data.get('number')
+    end_date = data.get('end_date')
+    offer_price = data.get('off_price')
+    num_limit = 0
 
+    # تبدیل تاریخ به فرمت صحیح برای دیتابیس
+    formatted_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
+
+    try:
+        # اتصال به دیتابیس و ذخیره اطلاعات
+        conn_str = (
+            'DRIVER={ODBC Driver 17 for SQL Server};'
+            'SERVER=DESKTOP-NL7MQT0;'
+            'DATABASE=radical;'
+            'UID=sa;'
+            'PWD=@Hossein2021'
+        )
+
+        with pyodbc.connect(conn_str) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    INSERT INTO offer_code (ID, number, end_date, number_limit, offer_price)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (offer_code_id, number, formatted_date, num_limit, offer_price))
+                conn.commit()
+        return jsonify({'success': True})
+    except pyodbc.Error as e:
+        print(f"Error: {str(e)}")  # چاپ خطا
+        return jsonify({'success': False, 'error': str(e)})
+#------------------------------------------------------------------
 
 
 
