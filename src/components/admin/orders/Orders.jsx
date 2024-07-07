@@ -1,9 +1,21 @@
+import React, { useEffect, useState } from "react";
 import formatPrice from "../../formatingPrice";
-import { useState } from "react";
 import AdminHeader from "../header/Header";
+import axios from "axios";
 
 const AdminOrder = () => {
   const [detailsShow, setDetailsShow] = useState({});
+  const [ordersValue, setOrdersValue] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://127.0.0.1:5000/api/orders')
+      .then(response => {
+        setOrdersValue(response.data);
+      })
+      .catch(error => {
+        console.error("There was an error fetching the orders!", error);
+      });
+  }, []);
 
   const toggleDetails = (index) => {
     setDetailsShow((prevState) => ({
@@ -12,43 +24,13 @@ const AdminOrder = () => {
     }));
   };
 
-  const ordersValue = [
-    {
-      title: "سفارش 1",
-      date: "1403/04/03",
-      loginCode: "12345",
-      discount: "A781dj",
-      orgPrice: 1200000,
-      lastPrice: 1000000,
-      tracking: 12344812,
-    },
-    {
-      title: "سفارش 2",
-      date: "1403/06/12",
-      loginCode: "67890",
-      discount: "B123cd",
-      orgPrice: 1500000,
-      lastPrice: 1300000,
-      tracking: 99391816,
-    },
-    {
-      title: "سفارش 3",
-      date: "1404/01/29",
-      loginCode: "98765",
-      discount: "O2984J",
-      orgPrice: 3400000,
-      lastPrice: 3000000,
-      tracking: 12345678,
-    },
-  ];
-
   const Order = ({ order, index }) => {
-    const { title, date } = order;
+    const { service_name, reg_date, ID_loginCode, disCount_value, service_price } = order;
     return (
       <>
         <li className="w-[30rem] bg-background-org relative text-background-white rounded-xl m-2 p-4 flex justify-between items-center">
           <section className="flex flex-col items-start">
-            <span className="mr-2">{title}</span>
+            <span className="mr-2">{service_name}</span>
           </section>
           <section>
             <span
@@ -86,39 +68,32 @@ const AdminOrder = () => {
   };
 
   const OrderDetails = ({ order }) => {
-    const { loginCode, discount, orgPrice, lastPrice, date, tracking } = order;
+    const { ID_loginCode, disCount_value, service_price, reg_date } = order;
     const detailsValues = [
       {
         title: "کد ورود",
-        detail: loginCode,
+        detail: ID_loginCode,
         icon: (
           <i className="fi fi-tr-binary-circle-check text-2xl text-background-elm flex justify-center items-center"></i>
         ),
       },
       {
-        title: "کد تخفیف",
-        detail: discount,
-        icon: (
-          <i className="fi fi-tr-badge-percent text-2xl text-background-elm flex justify-center items-center"></i>
-        ),
-      },
-      {
         title: "قیمت اصلی",
-        detail: formatPrice(orgPrice),
+        detail: formatPrice(service_price),
         icon: (
           <i className="fi fi-tr-usd-circle text-2xl text-background-elm flex justify-center items-center"></i>
         ),
       },
       {
         title: "قیمت نهایی",
-        detail: formatPrice(lastPrice),
+        detail: formatPrice(service_price - disCount_value),
         icon: (
           <i className="fi fi-tr-file-invoice-dollar text-2xl text-background-elm flex justify-center items-center"></i>
         ),
       },
       {
         title: "تاریخ",
-        detail: date,
+        detail: reg_date,
         icon: (
           <i className="fi fi-tr-calendar-lines text-2xl text-background-elm flex justify-center items-center"></i>
         ),
