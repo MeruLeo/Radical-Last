@@ -253,32 +253,42 @@ def get_offerCode():
         return jsonify({'error': 'An error occurred while fetching login codes'}), 500
 #------------------------------------------------------------------------------
 
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2021'
-)
-
+import datetime
 @app.route('/api/save_loginCode', methods=['POST'])
 def save_login_code():
     data = request.get_json()
     login_code_id = data.get('ID')
     number = data.get('number')
     end_date = data.get('end_date')
+    num_limit = data.get('number_limit')
 
-    cursor = conn_str.cursor()
+    # تبدیل تاریخ به فرمت صحیح برای دیتابیس
+    formatted_date = datetime.datetime.strptime(end_date, '%Y-%m-%d').date()
+
     try:
-        cursor.execute('''
-            INSERT INTO login_code (ID, number, end_date)
-            VALUES (?, ?, ?)
-        ''', (login_code_id, number, end_date))
-        conn_str.commit()
+        # اتصال به دیتابیس و ذخیره اطلاعات
+        conn_str = (
+            'DRIVER={ODBC Driver 17 for SQL Server};'
+            'SERVER=DESKTOP-NL7MQT0;'
+            'DATABASE=radical;'
+            'UID=sa;'
+            'PWD=@Hossein2021'
+        )
+
+        with pyodbc.connect(conn_str) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    INSERT INTO login_code (ID, number, end_date, number_limit)
+                    VALUES (?, ?, ?, ?)
+                ''', (login_code_id, number, end_date, num_limit))
+                conn.commit()
         return jsonify({'success': True})
-    except Exception as e:
-        conn.rollback()
+    except pyodbc.Error as e:
+        print(f"Error: {str(e)}")  # چاپ خطا
         return jsonify({'success': False, 'error': str(e)})
+
+
+
 
     
 if __name__ == '__main__':

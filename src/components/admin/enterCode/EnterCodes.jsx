@@ -77,23 +77,29 @@ const EnterCodes = () => {
     const { new_enter_code, count_people, date_limit } = formData;
   
     try {
+      // تبدیل تاریخ به فرمت صحیح برای دیتابیس
+      // const formattedDate = new Date(date_limit).toISOString().split('T')[0];
+  
+      // ارسال درخواست به سمت سرور
       const response = await axios.post('http://localhost:5000/api/save_loginCode', {
         ID: new_enter_code,
         number: count_people,
         end_date: date_limit,
+        numebr_limit:0,
       });
   
       if (response.data.success) {
-        // Handle success scenario (e.g., show success message)
         console.log('Login code saved successfully');
       } else {
-        // Handle failure scenario (e.g., show error message)
-        console.error('Failed to save login code');
+        console.error('Failed to save login code:', response.data.error);
       }
     } catch (error) {
-      console.error('Error while saving login code:', error);
+      console.error('Error while saving login code:', error.message || error);
     }
   };
+  
+  
+  
   
 
   return (
@@ -136,8 +142,8 @@ const EnterCodes = () => {
               {
                 title: "کد ورود جدید",
                 name: "new_enter_code",
-                type: "number",
-                validationSchema: Yup.number()
+                type: "text",
+                validationSchema: Yup.string()
                   .min(5, "لطفا پنج عدد وارد کنید")
                   .max(5, "لطفا پنج عدد وارد کنید")
                   .required("این فیلد اجباری است"),
