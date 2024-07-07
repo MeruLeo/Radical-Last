@@ -321,7 +321,40 @@ def save_offer_code():
         print(f"Error: {str(e)}")  # چاپ خطا
         return jsonify({'success': False, 'error': str(e)})
 #------------------------------------------------------------------
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
 
+@app.route('/api/show_services', methods=['GET'])
+def get_services1():
+    try:
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        query = '''
+        SELECT name, price
+        FROM services
+        '''
+        cursor.execute(query)
+        show_services = []
+        for row in cursor.fetchall():
+            services = {
+                'service_name': row.name,
+                'service_price': row.price,
+            }
+            show_services.append(services)
+        
+        cursor.close()
+        conn.close()
+        return jsonify(show_services), 200
+    
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'error': 'An error occurred while fetching login codes'}), 500
 
 
     

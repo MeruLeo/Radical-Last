@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Toggle from "../../toggle/Toggle";
 import AdminHeader from "../header/Header";
 import EnterCode from "../elements/EnterCode";
@@ -17,29 +17,21 @@ const HeaderServices = () => {
     y: 0,
     currentItem: null,
   });
+  const [enterCodesValues, setEnterCodesValues] = useState([]);
 
-  const enterCodesValues = [
-    {
-      title: "ادمین اینستاگرام",
-      price: formatPrice(120000),
-      canEdit: false,
-    },
-    {
-      title: "ادمین اینستاگرام",
-      price: formatPrice(120000),
-      canEdit: false,
-    },
-    {
-      title: "ادمین اینستاگرام",
-      price: formatPrice(120000),
-      canEdit: false,
-    },
-    {
-      title: "ادمین اینستاگرام",
-      price: formatPrice(120000),
-      canEdit: false,
-    },
-  ];
+  useEffect(() => {
+    fetch('http://127.0.0.1:5000/api/show_services')
+      .then(response => response.json())
+      .then(data => {
+        const formattedData = data.map(service => ({
+          title: service.service_name,
+          price: formatPrice(service.service_price),
+          canEdit: false,
+        }));
+        setEnterCodesValues(formattedData);
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  }, []);
 
   const handleContextMenu = (x, y, currentItem) => {
     setContextMenu({
