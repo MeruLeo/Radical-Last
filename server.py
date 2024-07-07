@@ -5,7 +5,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # اضافه کردن CORS با اجازه دسترسی به همه مبداها
 
-# تنظیمات اتصال به SQL Server
 conn = pyodbc.connect(
     'DRIVER={ODBC Driver 17 for SQL Server};'
     'SERVER=DESKTOP-NL7MQT0;'
@@ -24,6 +23,9 @@ def check_code():
     row = cursor.fetchone()
     
     if row:
+        # Update number_limit field
+        cursor.execute('UPDATE login_code SET number_limit = number_limit + 1 WHERE ID = ?', (code,))
+        conn.commit()
         return jsonify({'exists': True})
     else:
         return jsonify({'exists': False})
@@ -385,5 +387,53 @@ def save_service():
         return jsonify({'success': False, 'error': str(e)})
 #---------------------------------------------------------------
     
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/orders_users', methods=['GET'])
+def get_orders_user():
+    try:
+        user_ID = request.args.get('user_ID')  # Get user_ID from request parameters
+        if not user_ID:
+            return jsonify({'error': 'user_ID parameter is required'}), 400
+        
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+        
+        query = '''
+        SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, oc.offer_price
+        FROM orders o
+        JOIN services s ON o.ID_service = s.ID
+        JOIN offer_code oc ON o.ID_offerCode = oc.ID
+        WHERE o.ID_user = ?
+        '''
+        cursor.execute(query, user_ID)
+        orders = []
+        for row in cursor.fetchall():
+            order = {
+                'ID_offerCode': row.ID_offerCode,
+                'ID_loginCode': row.ID_loginCode,
+                'service_name': row.service_name,
+                'service_price': row.service_price,
+                'reg_date': row.reg_date,
+                'disCount_value': row.offer_price,
+            }
+            orders.append(order)
+        
+        cursor.close()
+        conn.close()
+        return jsonify(orders), 200
+    
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'error': 'An error occurred while fetching orders'}), 500
+
+    
+
 if __name__ == '__main__':
     app.run(debug=True)

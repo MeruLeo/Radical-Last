@@ -131,70 +131,6 @@ const CompanyInfo = () => {
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const companyInfo = {
-        ID_loginCode: localStorage.getItem("entercode"),
-        logo: isChecked.includes("option-1"),
-        color: isChecked.includes("option-3"),
-        slogan: isChecked.includes("option-2"),
-        personal_element: isChecked.includes("option-4"),
-        publicity: isChecked.includes("option-5"),
-      };
-
-      const productCoordinates = {
-        ID_loginCode: localStorage.getItem("entercode"),
-        mostPart_product: formData.productimportant,
-        strongPart_product: formData.strongers,
-        mostCompetitor_company: formData.theenemy,
-        bestPerformance_product: formData.forcustomers,
-        more_strategy: formData.strategy,
-      };
-
-      const informationCompany = {
-        ID_loginCode: localStorage.getItem("entercode"),
-        name: formData.companyname,
-        year: formData.yearofbi,
-        size: formData.sizeofcompany,
-        address: formData.address,
-        startedWork_market: formData.startedwork,
-        future_market: formData.eyework,
-        website: formData.website,
-      };
-
-      // Submit company info
-      await axios.post(
-        "http://localhost:5000/api/company_history",
-        companyInfo
-      );
-
-      // Submit product coordinates
-      await axios.post(
-        "http://localhost:5000/api/product_coordinates",
-        productCoordinates
-      );
-
-      // Submit company information
-      await axios.post(
-        "http://localhost:5000/api/information_company",
-        informationCompany
-      );
-
-      // Handle file upload
-      if (selectedFile !== "No file chosen") {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", selectedFile);
-        await axios.post("http://localhost:5000/api/uploadpdf", uploadFormData);
-      }
-
-      alert("اطلاعات با موفقیت ارسال شد");
-    } catch (error) {
-      console.error("Error submitting data: ", error);
-      alert("خطایی در ارسال اطلاعات رخ داد");
-    }
-  };
-
   const CheckBox = ({ title, id }) => {
     return (
       <li className="relative top-4 m-1">
@@ -322,7 +258,7 @@ const CompanyInfo = () => {
         title="رادیکال"
         desc="سابقه خود را در فعالیت شرکت های مختلف بنویسید"
         content={
-          <form onSubmit={handleSubmit}>
+          <form >
             <HistoryOfCompany />
             <ProductCoordinates />
             <BigForm

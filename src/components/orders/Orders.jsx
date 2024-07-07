@@ -6,19 +6,21 @@ import formatPrice from '../formatingPrice';
 const Orders = () => {
   const [orders, setOrders] = useState([]);
 
-  useEffect(() => {
-    // Function to fetch orders data from API
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/orders');
-        setOrders(response.data);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      }
-    };
+useEffect(() => {
+  // Function to fetch orders data from API
+  const fetchOrders = async () => {
+    const user_ID = Number(localStorage.getItem('userId')); // Get user_ID from local storage
+    try {
+      const response = await axios.get(`http://localhost:5000/api/orders_users?user_ID=${user_ID}`);
+      setOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
 
-    fetchOrders();
-  }, []);
+  fetchOrders();
+}, []);
+
 
   const toggleDetails = (index) => {
     setOrders((prevOrders) =>
@@ -67,6 +69,8 @@ const Orders = () => {
       </>
     );
   };
+
+  const user_ID = Number(localStorage.getItem('userId'));
 
   const OrderDetails = ({ order }) => {
     const { ID_loginCode, ID_offerCode, ID_services, service_price, reg_date, disCount_value } = order;
