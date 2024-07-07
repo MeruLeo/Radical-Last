@@ -42,6 +42,31 @@ const HeaderServices = () => {
     });
   };
 
+  const handleSubmit = async (values) => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/save_service', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: values['service-title'],
+          price: values['service-price'],
+        }),
+      });
+
+      if (response.ok) {
+        alert('Service saved successfully!');
+        // Optional: update the list of services by refetching
+      } else {
+        alert('Failed to save service');
+      }
+    } catch (error) {
+      console.error('Error saving service:', error);
+      alert('An error occurred');
+    }
+  };
+
   const contextMenuValues = [
     {
       title: "ویرایش",
@@ -81,7 +106,7 @@ const HeaderServices = () => {
       title: "قیمت سرویس",
       name: "service-price",
       type: "number",
-      validationSchema: Yup.string().required("این فیلد اجباری است"),
+      validationSchema: Yup.number().required("این فیلد اجباری است"),
       initialValue: "",
     },
   ];
@@ -122,6 +147,7 @@ const HeaderServices = () => {
           <FormComponent
             inputs={componentInputs}
             btn={<NormalBtn title={`ثبت`} />}
+            onSubmit={handleSubmit}
           />
         </div>
       )}

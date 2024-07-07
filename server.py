@@ -355,8 +355,34 @@ def get_services1():
     except Exception as e:
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while fetching login codes'}), 500
+#---------------------------------------------------------------------------------
+@app.route('/api/save_service', methods=['POST'])
+def save_service():
+    data = request.get_json()
+    name = data['name']
+    price = data['price']
 
+    try:
+        # اتصال به دیتابیس و ذخیره اطلاعات
+        conn_str = (
+            'DRIVER={ODBC Driver 17 for SQL Server};'
+            'SERVER=DESKTOP-NL7MQT0;'
+            'DATABASE=radical;'
+            'UID=sa;'
+            'PWD=@Hossein2021'
+        )
 
+        with pyodbc.connect(conn_str) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    INSERT INTO services (name, price)
+                    VALUES (?, ?)
+                ''', (name, price))
+                conn.commit()
+        return jsonify({'success': True})
+    except pyodbc.Error as e:
+        print(f"Error: {str(e)}")  # چاپ خطا
+        return jsonify({'success': False, 'error': str(e)})
     
 if __name__ == '__main__':
     app.run(debug=True)
