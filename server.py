@@ -432,7 +432,81 @@ def get_orders_user():
     except Exception as e:
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while fetching orders'}), 500
+#--------------------------------------------------------------------------------
+conn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
 
+@app.route('/api/delete_service', methods=['DELETE'])
+def delete_service():
+    try:
+        data = request.get_json()
+        service_name = data.get('service_name')
+
+        if not service_name:
+            return jsonify({'error': 'Service name is required'}), 400
+
+        conn = pyodbc.connect(conn_str)
+        cursor = conn.cursor()
+
+        query = "DELETE FROM services WHERE name = ?"
+        cursor.execute(query, service_name)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        return jsonify({'message': 'Service deleted successfully!'}), 200
+
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'error': 'An error occurred while deleting the service'}), 500
+#-----------------------------------------------------------------
+conn = pyodbc.connect(
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/edit_service', methods=['POST'])
+def edit_service():
+    data = request.get_json()
+    old_name = data.get('old_name')
+    new_name = data.get('new_name')
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM services WHERE name = ?', (old_name,))
+    row = cursor.fetchone()
+    
+    if row:
+        cursor.execute('UPDATE services SET name = ? WHERE name = ?', (new_name, old_name))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Service updated successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Service not found'})
+
+@app.route('/api/edit_service_price', methods=['POST'])
+def edit_service_price():
+    data = request.get_json()
+    name = data.get('name')
+    new_price = data.get('new_price')
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM services WHERE name = ?', (name,))
+    row = cursor.fetchone()
+    
+    if row:
+        cursor.execute('UPDATE services SET price = ? WHERE name = ?', (new_price, name))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Service price updated successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Service not found'})
     
 
 if __name__ == '__main__':

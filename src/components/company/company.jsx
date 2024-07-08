@@ -4,10 +4,13 @@ import axios from "axios";
 import Header from "../header/Header";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import BigForm from "../form/BigForm";
+import FormComponent from "../form/form";
 
 const CompanyInfo = () => {
-  const [isChecked, setIsChecked] = useState([]);
-  const [selectedFile, setSelectedFile] = useState("No file chosen");
+  const [isChecked, setIsChecked] = useState(
+    Array(5).fill(false) // آرایه‌ای به اندازه تعداد چک‌باکس‌ها، با مقادیر پیش‌فرض false
+  );
+  const [selectedFile, setSelectedFile] = useState("فایلی انتخاب نشده است");
   const [formData, setFormData] = useState({
     companyname: "",
     yearofbi: "",
@@ -123,29 +126,31 @@ const CompanyInfo = () => {
     ],
   ];
 
-  const handleCheck = (id) => {
-    setIsChecked((prevChecked) =>
-      prevChecked.includes(id)
-        ? prevChecked.filter((checkedId) => checkedId !== id)
-        : [...prevChecked, id]
-    );
+  const handleCheck = (index) => {
+    const newIsChecked = [...isChecked];
+    newIsChecked[index] = !newIsChecked[index];
+    setIsChecked(newIsChecked);
+    newIsChecked.forEach(check => {
+      let checkValue = check;
+      console.log(checkValue);
+    })
   };
 
-  const CheckBox = ({ title, id }) => {
+  const CheckBox = ({ title, index }) => {
     return (
       <li className="relative top-4 m-1">
         <input
           type="checkbox"
           className="hidden"
-          checked={isChecked.includes(id)}
-          onChange={() => handleCheck(id)}
+          checked={isChecked[index]}
+          onChange={() => handleCheck(index)}
           name={title}
-          id={id}
+          id={`checkbox-${index}`}
         />
         <label
-          htmlFor={id}
+          htmlFor={`checkbox-${index}`}
           className={`text-background-white border-1 transition-all duration-200 hover:border-background-elm w-fit p-4 cursor-pointer rounded-xl ${
-            isChecked.includes(id)
+            isChecked[index]
               ? "border-background-elm bg-background-elm"
               : "bg-background-elm2 border-background-elm2"
           }`}
@@ -154,6 +159,12 @@ const CompanyInfo = () => {
         </label>
       </li>
     );
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Checked boxes on submit:", isChecked);
+    console.log("Form data on submit:", formData);
   };
 
   const HistoryOfCompany = () => {
@@ -166,7 +177,7 @@ const CompanyInfo = () => {
             {inputFieldes[0].map((option, index) => (
               <CheckBox
                 title={option.title}
-                id={`option-${index + 1}`}
+                index={index}
                 key={index}
               />
             ))}
@@ -258,7 +269,7 @@ const CompanyInfo = () => {
         title="رادیکال"
         desc="سابقه خود را در فعالیت شرکت های مختلف بنویسید"
         content={
-          <form >
+          <form onSubmit={handleSubmit}>
             <HistoryOfCompany />
             <ProductCoordinates />
             <BigForm
@@ -277,7 +288,7 @@ const CompanyInfo = () => {
               formData={formData}
             />
             <PdfInput />
-            <BigForm
+            <FormComponent
               inputs={inputFieldes[1]}
               handleInputChange={(e) =>
                 setFormData({ ...formData, [e.target.name]: e.target.value })
