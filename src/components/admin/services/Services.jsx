@@ -127,7 +127,7 @@ const HeaderServices = () => {
     setPopupContent({ 
       title: `ویرایش ${serviceName}`, 
       inputs: editServiceName, 
-      onsubmit: handleEditServiceSubmit 
+      onSubmit: handleEditServiceSubmit 
     });
     setShowPopup(true);
   };
@@ -282,9 +282,10 @@ const HeaderServices = () => {
           title={popupContent.title}
           inputs={popupContent.inputs}
           onClose={() => setShowPopup(false)}
-          onSubmit={popupContent.onSubmit}
+          handleSubmit={popupContent.onSubmit} // باید handleSubmit باشد
         />
       )}
+
     </>
   );
 };

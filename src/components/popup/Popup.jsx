@@ -4,7 +4,6 @@ import FormComponent from "../form/form.jsx";
 import NormalBtn from "../butttons/Normal/NormalBtn.jsx";
 
 const Popup = ({ title, inputs, onClose, handleSubmit }) => {
-
   return (
     <motion.div
       className="fixed inset-0 bg-opacity-90 bg-black flex items-center justify-center"
@@ -33,5 +32,6 @@ const Popup = ({ title, inputs, onClose, handleSubmit }) => {
     </motion.div>
   );
 };
+
 
 export default Popup;

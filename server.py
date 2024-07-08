@@ -508,6 +508,83 @@ def edit_service_price():
     else:
         return jsonify({'status': 'error', 'message': 'Service not found'})
     
+#----------------------------------------------------------------------------
+
+conn = pyodbc.connect(
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/edit_offerCode', methods=['POST'])
+def edit_offer_code():
+    data = request.get_json()
+    old_id = data.get('old_id')
+    new_id = data.get('new_id')
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (old_id,))
+    row = cursor.fetchone()
+    
+    if row:
+        cursor.execute('UPDATE offer_code SET ID = ? WHERE ID = ?', (new_id, old_id))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Offer code updated successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+
+@app.route('/api/increase_users', methods=['POST'])
+def increase_users():
+    data = request.get_json()
+    ID = data.get('ID')
+    new_number = data.get('new_number')
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
+    row = cursor.fetchone()
+    
+    if row:
+        cursor.execute('UPDATE offer_code SET number = ? WHERE ID = ?', (new_number, ID))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Number of users updated successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+
+@app.route('/api/increase_validity', methods=['POST'])
+def increase_validity():
+    data = request.get_json()
+    ID = data.get('ID')
+    new_date = data.get('new_date')
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
+    row = cursor.fetchone()
+    
+    if row:
+        cursor.execute('UPDATE offer_code SET end_date = ? WHERE ID = ?', (new_date, ID))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'End date updated successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+
+@app.route('/api/delete_offerCode', methods=['DELETE'])
+def delete_offer_code():
+    data = request.get_json()
+    ID = data.get('ID')
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
+    row = cursor.fetchone()
+    
+    if row:
+        cursor.execute('DELETE FROM offer_code WHERE ID = ?', (ID,))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Offer code deleted successfully'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
