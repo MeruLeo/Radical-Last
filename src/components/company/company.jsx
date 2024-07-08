@@ -126,7 +126,6 @@ const CompanyInfo = () => {
     ],
   ];
 
-<<<<<<< HEAD
   const handleCheck = (index) => {
     const newIsChecked = [...isChecked];
     newIsChecked[index] = !newIsChecked[index];
@@ -263,40 +262,6 @@ const CompanyInfo = () => {
       />
     );
   };
-=======
-  // const handleCheck = (id) => {
-  //   setIsChecked((prevChecked) =>
-  //     prevChecked.includes(id)
-  //       ? prevChecked.filter((checkedId) => checkedId !== id)
-  //       : [...prevChecked, id]
-  //   );
-  // };
-
-  // const CheckBox = ({ title, id }) => {
-  //   return (
-  //     <li className="relative top-4 m-1">
-  //       <input
-  //         type="checkbox"
-  //         className="hidden"
-  //         checked={isChecked.includes(id)}
-  //         onChange={() => handleCheck(id)}
-  //         name={title}
-  //         id={id}
-  //       />
-  //       <label
-  //         htmlFor={id}
-  //         className={`text-background-white border-1 transition-all duration-200 hover:border-background-elm w-fit p-4 cursor-pointer rounded-xl ${
-  //           isChecked.includes(id)
-  //             ? "border-background-elm bg-background-elm"
-  //             : "bg-background-elm2 border-background-elm2"
-  //         }`}
-  //       >
-  //         {title}
-  //       </label>
-  //     </li>
-  //   );
-  // };
->>>>>>> 3854ec36b215e679d4fe0aadaf5a699aea66478f
 
   return (
     <div className="rounded-3xl p-4 max-w-100 w-fit flex flex-col justify-center items-center absolute top-[10%] left-[50%] translate-x-[-50%] translate-y-[-10%]">
@@ -304,29 +269,7 @@ const CompanyInfo = () => {
         title="رادیکال"
         desc="سابقه خود را در فعالیت شرکت های مختلف بنویسید"
         content={
-<<<<<<< HEAD
           <form onSubmit={handleSubmit}>
-            <HistoryOfCompany />
-            <ProductCoordinates />
-            <BigForm
-              inputs={inputFieldes[2]}
-              handleInputChange={(e) =>
-                setFormData({ ...formData, [e.target.name]: e.target.value })
-              }
-              formData={formData}
-            />
-            <Strategy />
-            <BigForm
-              inputs={inputFieldes[3]}
-              handleInputChange={(e) =>
-                setFormData({ ...formData, [e.target.name]: e.target.value })
-              }
-              formData={formData}
-            />
-            <PdfInput />
-=======
-          <form>
->>>>>>> 3854ec36b215e679d4fe0aadaf5a699aea66478f
             <FormComponent
               inputs={inputFieldes[1]}
               formData={formData}
