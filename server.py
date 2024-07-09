@@ -19,7 +19,7 @@ def check_code():
     code = data.get('code')
     
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM login_code WHERE ID = ?', (code,))
+    cursor.execute('SELECT * FROM login_code WHERE ID = ? and number > number_limit', (code,))
     row = cursor.fetchone()
     
     if row:
@@ -521,8 +521,8 @@ conn = pyodbc.connect(
 @app.route('/api/edit_offerCode', methods=['POST'])
 def edit_offer_code():
     data = request.get_json()
-    old_id = data.get('old_id')
-    new_id = data.get('new_id')
+    old_id = data.get('old_id') # تغییر نام پارامتر به old_id
+    new_id = data.get('new_id') # تغییر نام پارامتر به new_id
     
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (old_id,))
@@ -531,14 +531,15 @@ def edit_offer_code():
     if row:
         cursor.execute('UPDATE offer_code SET ID = ? WHERE ID = ?', (new_id, old_id))
         conn.commit()
-        return jsonify({'status': 'success', 'message': 'Offer code updated successfully'})
+        return jsonify({'success': True})
     else:
-        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+        return jsonify({'success': False, 'message': 'Offer code not found'})
+
 
 @app.route('/api/increase_users', methods=['POST'])
 def increase_users():
     data = request.get_json()
-    ID = data.get('ID')
+    ID = data.get('code')  # مطمئن شوید که این نام با نام ارسالی از سمت فرانت‌اند همخوانی دارد
     new_number = data.get('new_number')
     
     cursor = conn.cursor()
@@ -548,14 +549,15 @@ def increase_users():
     if row:
         cursor.execute('UPDATE offer_code SET number = ? WHERE ID = ?', (new_number, ID))
         conn.commit()
-        return jsonify({'status': 'success', 'message': 'Number of users updated successfully'})
+        return jsonify({'success': True, 'message': 'Number of users updated successfully'})
     else:
-        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+        return jsonify({'success': False, 'message': 'Offer code not found'})
+
 
 @app.route('/api/increase_validity', methods=['POST'])
 def increase_validity():
     data = request.get_json()
-    ID = data.get('ID')
+    ID = data.get('code')  # مطمئن شوید که این نام با نام ارسالی از سمت فرانت‌اند همخوانی دارد
     new_date = data.get('new_date')
     
     cursor = conn.cursor()
@@ -565,14 +567,15 @@ def increase_validity():
     if row:
         cursor.execute('UPDATE offer_code SET end_date = ? WHERE ID = ?', (new_date, ID))
         conn.commit()
-        return jsonify({'status': 'success', 'message': 'End date updated successfully'})
+        return jsonify({'success': True, 'message': 'End date updated successfully'})
     else:
-        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+        return jsonify({'success': False, 'message': 'Offer code not found'})
+
 
 @app.route('/api/delete_offerCode', methods=['DELETE'])
 def delete_offer_code():
     data = request.get_json()
-    ID = data.get('ID')
+    ID = data.get('data') # تغییر نام پارامتر به data
     
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
@@ -581,9 +584,9 @@ def delete_offer_code():
     if row:
         cursor.execute('DELETE FROM offer_code WHERE ID = ?', (ID,))
         conn.commit()
-        return jsonify({'status': 'success', 'message': 'Offer code deleted successfully'})
+        return jsonify({'success': True})
     else:
-        return jsonify({'status': 'error', 'message': 'Offer code not found'})
+        return jsonify({'success': False, 'message': 'Offer code not found'})
 
 
 if __name__ == '__main__':

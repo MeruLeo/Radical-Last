@@ -7,6 +7,7 @@ import ContextMenu from "../elements/ContextMenu";
 import NewElm from "../elements/NewElm.jsx";
 import * as Yup from "yup";
 import MagicBtn from "../../butttons/magic/Magic.jsx";
+import convertToJalali from "../../dateJalali/dateExchange.jsx";
 
 const EnterCodes = () => {
   const [selected, setSelected] = useState("actives");
@@ -42,6 +43,7 @@ const EnterCodes = () => {
       x,
       y,
       currentItem,
+      loginCodeID : currentItem.loginCode_ID,
     });
   };
 
@@ -54,7 +56,7 @@ const EnterCodes = () => {
     {
       title: "ویرایش",
       icon: <i className="fa-solid fa-pen-to-square"></i>,
-      onClick: () => alert("Edit clicked!"),
+      onClick: () => alert(contextMenu.currentItem.loginCode_ID),
     },
     {
       title: "افزایش نفرات",
@@ -128,7 +130,7 @@ const EnterCodes = () => {
               title={loginCode.loginCode_ID}
               userLimit={loginCode.number_loginCode}
               currentUsers={loginCode.numberLimit_loginCode}
-              dateLimit={loginCode.endDate_loginCode}
+              dateLimit={convertToJalali(loginCode.endDate_loginCode)}
               onContextMenu={handleContextMenu}
               renderAdditionalContent={() => <span></span>}
             />

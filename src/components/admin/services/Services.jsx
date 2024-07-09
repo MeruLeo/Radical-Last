@@ -261,7 +261,7 @@ const HeaderServices = () => {
             <EnterCode
               key={index}
               title={enterCodesValue.title}
-              price={enterCodesValue.price}
+              price={formatPrice(enterCodesValue.price)}
               hide={`hidden`}
               onContextMenu={(x, y) => handleContextMenu(x, y, enterCodesValue)}
               renderAdditionalContent={() => <span></span>}
