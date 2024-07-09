@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import pyodbc
 from flask_cors import CORS
+import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # اضافه کردن CORS با اجازه دسترسی به همه مبداها
@@ -63,8 +64,12 @@ def check_discount_code(code):
         'PWD=@Hossein2021'
     )
     cursor = conn.cursor()
-    cursor.execute("SELECT offer_price FROM offer_code WHERE ID=?", code)
+    cursor.execute("SELECT offer_price, number_limit FROM offer_code WHERE ID=?", code)
     discount = cursor.fetchone()
+    if discount:
+        new_limit = discount[1] + 1
+        cursor.execute("UPDATE offer_code SET number_limit = ? WHERE ID = ?", (new_limit, code))
+        conn.commit()
     conn.close()
     return discount
 
@@ -80,6 +85,7 @@ def check_discount():
             return jsonify({'error': 'Invalid discount code'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 #-------------------------------------------------------------------------------
     
 conn = pyodbc.connect(
@@ -654,6 +660,52 @@ def delete_login_code_route():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+#---------------------------------------------------------
+
+
+MERCHANT = 'YOUR_MERCHANT_ID'
+ZARINPAL_REQUEST_URL = 'https://api.zarinpal.com/pg/v4/payment/request.json'
+ZARINPAL_VERIFY_URL = 'https://api.zarinpal.com/pg/v4/payment/verify.json'
+CALLBACK_URL = 'http://localhost:3000/verify'  # آدرس بازگشت بعد از پرداخت
+
+@app.route('/api/payment', methods=['POST'])
+def create_payment():
+    data = request.get_json()
+    amount = data.get('amount')  # مقدار پرداخت
+    description = 'پرداخت برای خدمات'
+    email = data.get('email')  # ایمیل کاربر
+    mobile = data.get('mobile')  # شماره موبایل کاربر
+
+    request_data = {
+        "merchant_id": MERCHANT,
+        "amount": amount,
+        "description": description,
+        "callback_url": CALLBACK_URL,
+        "metadata": {"email": email, "mobile": mobile}
+    }
+
+    response = requests.post(ZARINPAL_REQUEST_URL, json=request_data)
+    if response.status_code == 200 and response.json().get('data') and response.json()['data'].get('code') == 100:
+        return jsonify({'url': response.json()['data']['link']})
+    else:
+        return jsonify({'error': 'Error in payment request'}), 500
+
+@app.route('/api/verify', methods=['GET'])
+def verify_payment():
+    authority = request.args.get('Authority')
+    amount = request.args.get('amount')
+
+    verify_data = {
+        "merchant_id": MERCHANT,
+        "authority": authority,
+        "amount": amount
+    }
+
+    response = requests.post(ZARINPAL_VERIFY_URL, json=verify_data)
+    if response.status_code == 200 and response.json().get('data') and response.json()['data'].get('code') == 100:
+        return jsonify({'status': 'OK', 'ref_id': response.json()['data']['ref_id']})
+    else:
+        return jsonify({'status': 'NOK'}), 500
 
 
 

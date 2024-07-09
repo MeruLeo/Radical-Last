@@ -4,6 +4,7 @@ import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
 import * as Yup from "yup";
 import Notifcation from "../notifcation/Notifcation";
+import axios from "axios";
 
 const Services = () => {
   const [discount, setDiscount] = useState(Number(localStorage.getItem("discount")) || 0);
@@ -99,49 +100,6 @@ const Services = () => {
     </li>
   );
 
-  const saveOrder = () => {
-    const orderDetails = {
-      offerCode: Number(localStorage.getItem('offerCode')),
-      userId: Number(localStorage.getItem('userId')),
-      entryCode: Number(localStorage.getItem('entercode')),
-      checkedServices: JSON.parse(localStorage.getItem('checkedServices')),
-      totalPrice: Math.max(totalPrice - discount, 0),
-    };
-
-    fetch("http://localhost:5000/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderDetails),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const successNotification = {
-          icon: "check",
-          content: "سفارش با موفقیت ثبت شد.",
-          iconColor: "text-green-500",
-        };
-        const errorNotification = {
-          icon: "xmark",
-          content: "خطایی در ثبت سفارش رخ داد.",
-          iconColor: "text-red-500",
-        };
-
-        setNotifcation(data.success ? successNotification : errorNotification);
-        setTimeout(() => setNotifcation(null), 3000);
-      })
-      .catch((error) => {
-        console.error("Error saving order:", error);
-        setNotifcation({
-          icon: "xmark",
-          content: "خطایی در ثبت سفارش رخ داد.",
-          iconColor: "text-red-500",
-        });
-        setTimeout(() => setNotifcation(null), 3000);
-      });
-  };
-
   const ServicesWrapper = () => (
     <div>
       <ul className="relative h-60 overflow-auto top-40 bg-background-elm2 w-fit rounded-3xl right-[50%] translate-x-[50%] pt-0.5 pb-0.5">
@@ -167,7 +125,7 @@ const Services = () => {
         </section>
       </div>
       <div className="absolute top-[37rem] right-[50%] translate-x-[50%]">
-        <FormComponent onSubmit={saveOrder} btn={<NormalBtn title={`پرداخت`} />} inputs={componentInputs1} />
+        <FormComponent btn={<NormalBtn title={`پرداخت`} />} inputs={componentInputs1} />
       </div>
     </div>
   );
