@@ -587,6 +587,74 @@ def delete_offer_code():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'message': 'Offer code not found'})
+    
+#-----------------------------------------------------------------------
+@app.route('/api/edit_loginCode', methods=['POST'])
+def edit_login_code_route():
+    data = request.get_json()
+    old_code = data.get('old_code')
+    new_code = data.get('new_code')
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE login_code SET ID = ? WHERE ID = ?", (new_code, old_code))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/increase_users_log', methods=['POST'])
+def increase_users_route():
+    data = request.get_json()
+    code = data.get('code')
+    new_number = data.get('new_number')
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM login_code WHERE ID = ?", (code,))
+        row = cursor.fetchone()
+        if row:
+            cursor.execute("UPDATE login_code SET number = ? WHERE ID = ?", (new_number, code))
+            conn.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Login code not found'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/increase_validity_log', methods=['POST'])
+def increase_validity_route():
+    data = request.get_json()
+    code = data.get('code')
+    new_date = data.get('new_date')
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM login_code WHERE ID = ?", (code,))
+        row = cursor.fetchone()
+        if row:
+            cursor.execute("UPDATE login_code SET end_date = ? WHERE ID = ?", (new_date, code))
+            conn.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Login code not found'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/delete_loginCode', methods=['DELETE'])
+def delete_login_code_route():
+    # Your deletion logic here
+    data = request.get_json()
+    code = data.get('code')
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM login_code WHERE ID = ?", (code,))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 
 
 if __name__ == '__main__':

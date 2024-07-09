@@ -276,7 +276,8 @@ const Services = () => {
       name: "discountcode",
       type: "text",
       validationSchema: Yup.string()
-        .matches(/^\d{7}$/, "لطفا کد هفت رقمی وارد کنید")
+        .max(5, 'لطفا کد 5 رقمی وارد کنید')
+        .min(5, 'لطفا کد 5 رقمی وارد کنید')
         .required("این فیلد اجباری است"),
       initialValue: "",
     },
