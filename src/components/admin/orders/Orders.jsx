@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import formatPrice from "../../formatingPrice";
 import AdminHeader from "../header/Header";
 import axios from "axios";
+import convertToJalali from "../../dateJalali/dateExchange";
 
 const AdminOrder = () => {
   const [detailsShow, setDetailsShow] = useState({});
@@ -93,7 +94,7 @@ const AdminOrder = () => {
       },
       {
         title: "تاریخ",
-        detail: reg_date,
+        detail: convertToJalali(reg_date),
         icon: (
           <i className="fi fi-tr-calendar-lines text-2xl text-background-elm flex justify-center items-center"></i>
         ),
