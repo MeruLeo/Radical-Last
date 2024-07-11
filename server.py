@@ -706,6 +706,36 @@ def verify_payment():
         return jsonify({'status': 'OK', 'ref_id': response.json()['data']['ref_id']})
     else:
         return jsonify({'status': 'NOK'}), 500
+#----------------------------------------------------------------------
+conn = pyodbc.connect(
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=DESKTOP-NL7MQT0;'
+    'DATABASE=radical;'
+    'UID=sa;'
+    'PWD=@Hossein2021'
+)
+
+@app.route('/api/company', methods=['POST'])
+def add_company_info():
+    data = request.get_json()
+    ID_user = data.get('ID_user')
+    name = data.get('name')
+    year = data.get('year')
+    size = data.get('size')
+    address = data.get('address')
+    start_market = data.get('start_market')
+    vision_market = data.get('vision_market')
+    web_site = data.get('web_site')
+
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO information_company (ID_user, name, year, size, address, start_market, vision_market, web_site)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (ID_user, name, year, size, address, start_market, vision_market, web_site))
+    
+    conn.commit()
+    
+    return jsonify({'success': True, 'message': 'Company information added successfully!'})
 
 
 

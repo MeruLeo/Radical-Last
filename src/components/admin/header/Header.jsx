@@ -55,7 +55,7 @@ const AdminHeader = () => {
   ];
 
   return (
-    <header className="backdrop-blur-xl z-40 fixed flex p-2 items-center justify-center w-full">
+    <header className="backdrop-blur-xl z-[1] fixed flex p-2 items-center justify-center w-full">
       <nav className="flex items-center justify-between">
         <ul className="flex w-full justify-evenly items-center p-2">
           {headerLinks.map((headerLink, index) => (

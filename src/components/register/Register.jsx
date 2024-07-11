@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
 import * as Yup from "yup";
@@ -9,6 +9,10 @@ import Notifcation from "../notifcation/Notifcation";
 
 const Register = () => {
   const [notification, setNotification] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem("userId", null);
+  }, []);
 
   const componentInputs = [
     {

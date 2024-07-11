@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
 import Notifcation from "../notifcation/Notifcation"; // وارد کردن کامپوننت Notifcation
@@ -11,7 +11,9 @@ import Header from "../header/Header";
 const Start = () => {
   const navigate = useNavigate();
   const [notification, setNotification] = useState(null);
-
+  useEffect(() => {
+    localStorage.setItem("entercode", null);
+  }, []);
   const componentInputs = [
     {
       title: "کد ورودی",

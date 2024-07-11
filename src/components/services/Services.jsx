@@ -15,6 +15,12 @@ const Services = () => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [entryCode, setEntryCode] = useState(localStorage.getItem("entercode") || "");
   const [notification, setNotifcation] = useState(null);
+  useEffect(() => {
+    localStorage.setItem('offerCode', null);
+    localStorage.setItem('discount', null);
+    localStorage.setItem("checkedServices", null);
+  }, [])
+  
 
   useEffect(() => {
     fetch("http://localhost:5000/api/services")

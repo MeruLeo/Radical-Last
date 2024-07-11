@@ -3,13 +3,10 @@ import * as Yup from "yup";
 import axios from "axios";
 import Header from "../header/Header";
 import NormalBtn from "../butttons/Normal/NormalBtn";
-import BigForm from "../form/BigForm";
 import FormComponent from "../form/form";
 
 const CompanyInfo = () => {
-  const [isChecked, setIsChecked] = useState(
-    Array(5).fill(false) // آرایه‌ای به اندازه تعداد چک‌باکس‌ها، با مقادیر پیش‌فرض false
-  );
+  const [isChecked, setIsChecked] = useState(Array(5).fill(false));
   const [selectedFile, setSelectedFile] = useState("فایلی انتخاب نشده است");
   const [formData, setFormData] = useState({
     companyname: "",
@@ -25,6 +22,23 @@ const CompanyInfo = () => {
     forcustomers: "",
     strategy: "",
   });
+
+  const resetFormData = () => {
+    setFormData({
+      companyname: "",
+      yearofbi: "",
+      sizeofcompany: "",
+      address: "",
+      startedwork: "",
+      eyework: "",
+      website: "",
+      productimportant: "",
+      strongers: "",
+      theenemy: "",
+      forcustomers: "",
+      strategy: "",
+    });
+  };
 
   const inputFieldes = [
     [
@@ -130,10 +144,10 @@ const CompanyInfo = () => {
     const newIsChecked = [...isChecked];
     newIsChecked[index] = !newIsChecked[index];
     setIsChecked(newIsChecked);
-    newIsChecked.forEach(check => {
+    newIsChecked.forEach((check) => {
       let checkValue = check;
       console.log(checkValue);
-    })
+    });
   };
 
   const CheckBox = ({ title, index }) => {
@@ -161,10 +175,25 @@ const CompanyInfo = () => {
     );
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Checked boxes on submit:", isChecked);
-    console.log("Form data on submit:", formData);
+  const handleSubmit = async (formData) => {
+    const ID_user = Number(localStorage.getItem("userId"));
+    const dataToSend = {
+      ID_user: ID_user,
+      name: formData.companyname,
+      year: formData.yearofbi,
+      size: formData.sizeofcompany,
+      address: formData.address,
+      start_market: formData.startedwork,
+      vision_market: formData.eyework,
+      web_site: formData.website,
+    };
+    try {
+      const response = await axios.post("http://127.0.0.1:5000/api/company", dataToSend);
+      console.log("Data submitted successfully:", response.data);
+      resetFormData(); // Clear form data after successful submission
+    } catch (error) {
+      console.error("Error submitting data:", error);
+    }
   };
 
   const HistoryOfCompany = () => {
@@ -175,11 +204,7 @@ const CompanyInfo = () => {
         inputs={
           <ul className="flex justify-center flex-wrap mt-4 items-center">
             {inputFieldes[0].map((option, index) => (
-              <CheckBox
-                title={option.title}
-                index={index}
-                key={index}
-              />
+              <CheckBox title={option.title} index={index} key={index} />
             ))}
           </ul>
         }
@@ -194,9 +219,7 @@ const CompanyInfo = () => {
           <h2 className="mb-4 mt-10">{title}</h2>
         </header>
         <main>
-          <span
-            className={`${descDisplay} text-md bg-background-elm text-background-white rounded-full p-2`}
-          >
+          <span className={`${descDisplay} text-md bg-background-elm text-background-white rounded-full p-2`}>
             <i className="fa-solid fa-circle-info ml-2"></i>
             {desc}
           </span>
@@ -209,10 +232,7 @@ const CompanyInfo = () => {
   const ProductCoordinates = () => {
     return (
       <>
-        <InfoTemplate
-          title="مختصات محصول"
-          desc="به سوالات زیر پاسخ ترجیحا کوتاه یا متوسط بدهید."
-        />
+        <InfoTemplate title="مختصات محصول" desc="به سوالات زیر پاسخ ترجیحا کوتاه یا متوسط بدهید." />
       </>
     );
   };
@@ -239,16 +259,12 @@ const CompanyInfo = () => {
               <input
                 type="file"
                 id="custom-input"
-                onChange={(e) =>
-                  setSelectedFile(e.target.files[0] || "هنوز فایلی انتخاب نشده")
-                }
+                onChange={(e) => setSelectedFile(e.target.files[0] || "هنوز فایلی انتخاب نشده")}
                 hidden
               />
               <label
                 htmlFor="custom-input"
-                className="block text-sm text-background-org mr-4 py-2 px-4
-                rounded-md border-0 font-semibold bg-background-elm
-                hover:bg-background-white transition-all duration-200 cursor-pointer"
+                className="block text-sm text-background-org mr-4 py-2 px-4 rounded-md border-0 font-semibold bg-background-elm hover:bg-background-white transition-all duration-200 cursor-pointer"
               >
                 <i className="fa-solid fa-paperclip ml-2"></i>
                 انتخاب فایل
@@ -269,13 +285,12 @@ const CompanyInfo = () => {
         title="رادیکال"
         desc="سابقه خود را در فعالیت شرکت های مختلف بنویسید"
         content={
-          <form onSubmit={handleSubmit}>
-            <FormComponent
-              inputs={inputFieldes[1]}
-              formData={formData}
-              btn={<NormalBtn title="ثبت اطلاعات" />}
-            />
-          </form>
+          <p>
+            <FormComponent 
+            inputs={inputFieldes[1]}
+            btn={<NormalBtn title="ثبت اطلاعات" />}
+            onSubmit={handleSubmit}/>
+          </p>
         }
       />
     </div>

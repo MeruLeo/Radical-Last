@@ -9,7 +9,7 @@ import * as Yup from "yup";
 import MagicBtn from "../../butttons/magic/Magic.jsx";
 import convertToJalali from "../../dateJalali/dateExchange.jsx";
 import Popup from "../../popup/Popup.jsx";
-
+import Notifcation from "../../notifcation/Notifcation.jsx";
 
 const EnterCodes = () => {
   const [selected, setSelected] = useState("actives");
@@ -19,7 +19,7 @@ const EnterCodes = () => {
     y: 0,
     currentItem: null,
   });
-
+  const [notifcation, setNotification] = useState(null); 
   const [loginCodes, setLoginCodes] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [popupContent, setPopupContent] = useState({ title: "", inputs: [], onSubmit: null });
@@ -61,9 +61,19 @@ const EnterCodes = () => {
       });
 
       if (response.data.success) {
-        console.log('Login code saved successfully');
+        setNotification({
+          icon: "check",
+          content: "کد ورود جدید با موفقیت اضافه شد",
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       } else {
-        console.error('Failed to save login code:', response.data.error);
+        setNotification({
+          icon: "xmark",
+          content: "کد ورود جدید شما از قبل تعریف شده است",
+          iconColor: "text-red-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
       console.error('Error while saving login code:', error.message || error);
@@ -77,7 +87,12 @@ const EnterCodes = () => {
         new_code: values['edit-login-code'],
       });
       if (response.data.success) {
-        alert('Login code updated successfully!');
+        setNotification({
+          icon: "xmark",
+          content: "ویرایش با موفقیت انجام شد",
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setLoginCodes(loginCodes.map(loginCode => 
           loginCode.loginCode_ID === contextMenu.currentItem
           ? { ...loginCode, loginCode_ID: values['edit-login-code'] }
@@ -85,7 +100,12 @@ const EnterCodes = () => {
         ));
         setShowPopup(false);
       } else {
-        alert('Failed to update login code');
+        setNotification({
+          icon: "times",
+          content: "خطا در ارتباط با سرور",
+          iconColor: "text-red-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
       console.error('Error updating login code:', error);
@@ -99,7 +119,12 @@ const EnterCodes = () => {
         new_number: values['count-people'],
       });
       if (response.data.success) {
-        alert('User limit updated successfully!');
+        setNotification({
+          icon: "xmark",
+          content: "افزایش نفرات با موفقیت انجام شد",
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setLoginCodes(loginCodes.map(loginCode => 
           loginCode.loginCode_ID === contextMenu.currentItem
           ? { ...loginCode, number_loginCode: values['count-people'] }
@@ -107,7 +132,12 @@ const EnterCodes = () => {
         ));
         setShowPopup(false);
       } else {
-        alert('Failed to update user limit');
+        setNotification({
+          icon: "times",
+          content: "خطا در ارتباط با سرور",
+          iconColor: "text-red-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
       console.error('Error updating user limit:', error);
@@ -121,7 +151,12 @@ const EnterCodes = () => {
         new_date: values['end_date'],
       });
       if (response.data.success) {
-        alert('Validity updated successfully!');
+        setNotification({
+          icon: "check",
+          content: "افزایش اعتبار با موفقیت انجام شد",
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setLoginCodes(loginCodes.map(loginCode => 
           loginCode.loginCode_ID === contextMenu.currentItem
           ? { ...loginCode, endDate_loginCode: values['end_date'] }
@@ -238,7 +273,7 @@ const EnterCodes = () => {
         onToggle={(value) => setSelected(value)}
       />
       {selected === "actives" ? (
-        <ul className="absolute bg-background-elm2 rounded-3xl top-56 right-[50%] translate-x-[50%]">
+        <ul className="relative bg-background-elm2 w-fit p-1 rounded-3xl top-56 right-[50%] translate-x-[50%]">
           {contextMenu.visible && (
             <ContextMenu
               contextMenu={contextMenu}
@@ -301,6 +336,13 @@ const EnterCodes = () => {
           inputs={popupContent.inputs}
           handleSubmit={popupContent.onSubmit}
           onClose={() => setShowPopup(false)}
+        />
+      )}
+      {notifcation && (
+        <Notifcation
+          icon={notifcation.icon}
+          content={notifcation.content}
+          iconColor={notifcation.iconColor}
         />
       )}
     </>

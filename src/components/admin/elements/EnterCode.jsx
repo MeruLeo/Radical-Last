@@ -28,7 +28,7 @@ const EnterCode = ({
   return (
     <li
       onContextMenu={handleContextMenuClick}
-      className="w-[30rem] bg-background-org text-background-white rounded-xl m-2 p-4 flex justify-between items-center"
+      className="w-[30rem] bg-background-org text-background-white rounded-xl m-1 p-4 flex justify-between items-center"
     >
       <section>{title}</section>
       <section className="flex items-center">

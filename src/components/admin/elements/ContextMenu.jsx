@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from "react";
 const ContextMenuItem = ({ title, icon, onClick }) => {
   return (
     <button
-      className="text-background-white transition-all duration-200 hover:bg-background-elm2 m-2 p-3 cursor-pointer flex justify-between items-center w-48 rounded-lg"
+      className="text-background-white z-[2] transition-all duration-200 hover:bg-background-elm2 m-2 p-3 cursor-pointer flex justify-between items-center w-48 rounded-lg"
       onClick={onClick}
     >
       {title}
@@ -35,7 +35,7 @@ const ContextMenu = ({ contextMenu, setContextMenu, contextMenuValues }) => {
 
   return (
     <ul
-      className="absolute z-[50] backdrop-blur-lg rounded-3xl"
+      className="absolute z-50 backdrop-blur-lg rounded-3xl"
       style={{ top: contextMenu.y, left: 0 }}
       ref={contextMenuRef}
     >
