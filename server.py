@@ -86,6 +86,36 @@ def check_discount():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def add_order(user_id, service_id, login_code, offer_code):
+    conn = pyodbc.connect(
+        'DRIVER={ODBC Driver 17 for SQL Server};'
+        'SERVER=DESKTOP-NL7MQT0;'
+        'DATABASE=radical;'
+        'UID=sa;'
+        'PWD=@Hossein2021'
+    )
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO orders (ID_user, ID_service, ID_loginCode, ID_offerCode) VALUES (?, ?, ?, ?)",
+        (user_id, service_id, login_code, offer_code)
+    )
+    conn.commit()
+    conn.close()
+
+@app.route('/api/submit_order', methods=['POST'])
+def submit_order():
+    data = request.get_json()
+    user_id = int(data.get('userId'))
+    services = data.get('checkedServices')
+    login_code = data.get('entercode')
+    offer_code = data.get('offerCode')
+    
+    try:
+        for service_id in services:
+            add_order(user_id, service_id, login_code, offer_code)
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 #-------------------------------------------------------------------------------
     
 conn = pyodbc.connect(

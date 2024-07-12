@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from '../header/Header';
 import formatPrice from '../formatingPrice';
+import convertToJalali from '../dateJalali/dateExchange';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -128,7 +129,7 @@ useEffect(() => {
             <i className="fi fi-tr-calendar-lines text-2xl text-background-elm flex justify-center items-center"></i>
             <h3 className="mr-4">تاریخ</h3>
           </span>
-          <span>{reg_date}</span>
+          <span>{convertToJalali(reg_date)}</span>
         </li>
         {service && (
           <li className={`w-full border-b-1 text-background-white border-background-elm flex items-center justify-between h-screen p-4 text-center`}>
