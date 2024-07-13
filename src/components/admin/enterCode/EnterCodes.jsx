@@ -37,12 +37,13 @@ const EnterCodes = () => {
     fetchLoginCodes();
   }, []);
 
-  const handleContextMenu = (x, y, currentItem) => {
+  const handleContextMenu = (x, y, currentItem, number_loginCode) => {
     setContextMenu({
       visible: true,
       x,
       y,
       currentItem,
+      number_loginCode,
     });
   };
 
@@ -177,7 +178,12 @@ const EnterCodes = () => {
         data: { code: contextMenu.currentItem }
       });
       if (response.data.success) {
-        alert('Login code deleted successfully!');
+        setNotification({
+          icon: "xmark",
+          content: `کد ورود${contextMenu.currentItem} با موفقیت حذف شود`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setLoginCodes(loginCodes.filter(loginCode => loginCode.loginCode_ID !== contextMenu.currentItem));
       } else {
         alert('Failed to delete login code');
@@ -194,7 +200,7 @@ const EnterCodes = () => {
       icon: <i className="fa-solid fa-pen-to-square"></i>,
       onClick: () => {
         setPopupContent({
-          title: `ویرایش کد ${contextMenu.currentItem}`,
+          title: `ویرایش کد ورود`,
           inputs: [
             {
               title: "کد ورود جدید",
@@ -204,7 +210,7 @@ const EnterCodes = () => {
                 .min(5, "لطفا  5 رقم وارد کنید")
                 .max(5, "لطفا  5 رقم وارد کنید")
                 .required("این فیلد اجباری است"),
-              initialValue: contextMenu.currentItem.loginCode_ID,
+              initialValue: contextMenu.currentItem,
             },
           ],
           onSubmit: handleEditLoginCodeSubmit,
@@ -217,15 +223,15 @@ const EnterCodes = () => {
       icon: <i className="fa-solid fa-person-circle-plus"></i>,
       onClick: () => {
         setPopupContent({
-          title: "Increase User Limit",
+          title: "ویرایش تعداد نفرات",
           inputs: [
             {
-              title: "New User Limit",
+              title: "تعداد نفرات جدید",
               name: "count-people",
               type: "number",
               validationSchema: Yup.number()
                 .required("This field is required"),
-              initialValue: contextMenu.currentItem.number_loginCode,
+              initialValue: contextMenu.number_loginCode,
             },
           ],
           onSubmit: handleIncreaseUsersSubmit,
@@ -238,10 +244,10 @@ const EnterCodes = () => {
       icon: <i className="fa-solid fa-calendar-plus"></i>,
       onClick: () => {
         setPopupContent({
-          title: "Increase Validity",
+          title: "تاریخ اعتبار جدید",
           inputs: [
             {
-              title: "New Validity Date",
+              title: "",
               name: "end_date",
               type: "date",
               validationSchema: Yup.string()
@@ -317,7 +323,7 @@ const EnterCodes = () => {
                 initialValue: generatedCode || "",
               },
               {
-                title: "تاریخ اعتبار",
+                title: "",
                 name: "date_limit",
                 type: "date",
                 validationSchema: Yup.string()
