@@ -5,7 +5,6 @@ import FormComponent from "../form/form";
 import * as Yup from "yup";
 import Notifcation from "../notifcation/Notifcation";
 import axios from "axios";
-import { Navigate } from "react-router-dom";
 
 const Services = () => {
   const [discount, setDiscount] = useState(Number(localStorage.getItem("discount")) || 0);
@@ -159,6 +158,7 @@ const Services = () => {
           content: "سفارش با موفقیت ثبت شد.",
           iconColor: "text-green-500",
         });
+        setTimeout(() => {setNotifcation(null)}, 3000);
       } else {
         setNotifcation({
           icon: "xmark",

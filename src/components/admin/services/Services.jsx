@@ -9,6 +9,7 @@ import FormComponent from "../../form/form";
 import NormalBtn from "../../butttons/Normal/NormalBtn";
 import * as Yup from "yup";
 import Popup from "../../popup/Popup";
+import Notifcation from "../../notifcation/Notifcation";
 
 const HeaderServices = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -21,6 +22,7 @@ const HeaderServices = () => {
     currentItem: null,
     serviceName: null,
   });
+  const [notifcation, setNotification] = useState(null);
   const [enterCodesValues, setEnterCodesValues] = useState([]);
 
   useEffect(() => {
@@ -62,8 +64,12 @@ const HeaderServices = () => {
       });
 
       if (response.ok) {
-        alert('Service saved successfully!');
-        // Optional: update the list of services by refetching
+        setNotification({
+          icon: "check",
+          content: `سرویس جدید با موفقیت اضافه شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       } else {
         alert('Failed to save service');
       }
@@ -107,7 +113,12 @@ const HeaderServices = () => {
       });
 
       if (response.ok) {
-        alert('Service updated successfully!');
+        setNotification({
+          icon: "check",
+          content: `ویرایش با موفقیت اعمال شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setEnterCodesValues(enterCodesValues.map(service => 
           service.title === contextMenu.serviceName 
           ? { ...service, title: values['service-new-title'] } 
@@ -146,7 +157,12 @@ const HeaderServices = () => {
       });
 
       if (response.ok) {
-        alert('Service price updated successfully!');
+        setNotification({
+          icon: "check",
+          content: `تغییر قیمت با موفقیت اعمال شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setEnterCodesValues(enterCodesValues.map(service => 
           service.title === contextMenu.serviceName 
           ? { ...service, price: values['service-new-price'] } 
@@ -182,7 +198,12 @@ const HeaderServices = () => {
       });
 
       if (response.ok) {
-        alert('Service deleted successfully!');
+        setNotification({
+          icon: "check",
+          content: `سرویس با موفقیت حذف شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setEnterCodesValues(enterCodesValues.filter(service => service.title !== serviceName));
       } else {
         alert('Failed to delete service');
@@ -249,7 +270,7 @@ const HeaderServices = () => {
         onToggle={(value) => setSelected(value)}
       />
       {selected === "actives" ? (
-        <ul className="absolute bg-background-elm2 rounded-3xl top-56 right-[50%] translate-x-[50%]">
+        <ul className="absolute bg-background-elm2 rounded-3xl p-1 top-56 right-[50%] translate-x-[50%]">
           {contextMenu.visible && (
             <ContextMenu
               contextMenu={contextMenu}
@@ -283,6 +304,13 @@ const HeaderServices = () => {
           inputs={popupContent.inputs}
           onClose={() => setShowPopup(false)}
           handleSubmit={popupContent.onSubmit} // باید handleSubmit باشد
+        />
+      )}
+      {notifcation && (
+        <Notifcation
+          icon={notifcation.icon}
+          content={notifcation.content}
+          iconColor={notifcation.iconColor}
         />
       )}
 

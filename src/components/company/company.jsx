@@ -4,9 +4,12 @@ import axios from "axios";
 import Header from "../header/Header";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
+import Notifcation from "../notifcation/Notifcation";
+import { useNavigate } from "react-router-dom";
 
 const CompanyInfo = () => {
   const [isChecked, setIsChecked] = useState(Array(5).fill(false));
+  const [notifcation, setNotification] = useState(null);
   const [selectedFile, setSelectedFile] = useState("فایلی انتخاب نشده است");
   const [formData, setFormData] = useState({
     companyname: "",
@@ -175,6 +178,7 @@ const CompanyInfo = () => {
     );
   };
 
+  const navigate = useNavigate();
   const handleSubmit = async (formData) => {
     const ID_user = Number(localStorage.getItem("userId"));
     const dataToSend = {
@@ -190,7 +194,8 @@ const CompanyInfo = () => {
     try {
       const response = await axios.post("http://127.0.0.1:5000/api/company", dataToSend);
       console.log("Data submitted successfully:", response.data);
-      resetFormData(); // Clear form data after successful submission
+      navigate("/services")
+      resetFormData();
     } catch (error) {
       console.error("Error submitting data:", error);
     }
