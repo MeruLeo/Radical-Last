@@ -9,6 +9,7 @@ import * as Yup from "yup";
 import MagicBtn from "../../butttons/magic/Magic.jsx";
 import Popup from "../../popup/Popup";
 import convertToJalali from "../../dateJalali/dateExchange.jsx";
+import Notifcation from "../../notifcation/Notifcation.jsx";
 
 const OfferCodes = () => {
   const [selected, setSelected] = useState("actives");
@@ -18,6 +19,7 @@ const OfferCodes = () => {
     y: 0,
     currentItem: null,
   });
+  const [notifcation, setNotification] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [popupContent, setPopupContent] = useState({ title: "", inputs: [], onSubmit: null });
   const [generatedCode, setGeneratedCode] = useState(null);
@@ -63,7 +65,12 @@ const OfferCodes = () => {
         off_price: values["offer_price"]
       });
       if (response.data.success) {
-        alert("Offer code saved successfully!");
+        setNotification({
+          icon: "check",
+          content: `کد تخفیف جدید با موفقیت اضافه شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
       } else {
         alert("Error saving offer code: " + response.data.error);
       }
@@ -79,7 +86,12 @@ const OfferCodes = () => {
         new_id: values['edit-offer-code'], // تغییر نام پارامتر به new_id
       });
       if (response.data.success) {
-        alert('Offer code updated successfully!');
+        setNotification({
+          icon: "check",
+          content: `ویرایش با موفقیت اعمال شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setOfferCodes(offerCodes.map(offerCode => 
           offerCode.offerCode_ID === contextMenu.currentItem.offerCode_ID
           ? { ...offerCode, offerCode_ID: values['edit-offer-code'] }
@@ -102,7 +114,12 @@ const OfferCodes = () => {
         new_number: values['count-people'],
       });
       if (response.data.success) {
-        alert('User limit updated successfully!');
+        setNotification({
+          icon: "check",
+          content: `افزایش نفرات با موفقیت اعمال شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setOfferCodes(offerCodes.map(offerCode => 
           offerCode.offerCode_ID === contextMenu.currentItem.offerCode_ID
           ? { ...offerCode, number_offerCode: values['count-people'] }
@@ -125,7 +142,12 @@ const OfferCodes = () => {
         new_date: values['end_date'],
       });
       if (response.data.success) {
-        alert('Validity updated successfully!');
+        setNotification({
+          icon: "check",
+          content: `افزایش اعتبار با موفقیت اعمال شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setOfferCodes(offerCodes.map(offerCode => 
           offerCode.offerCode_ID === contextMenu.currentItem.offerCode_ID
           ? { ...offerCode, endDate_offerCode: values['end_date'] }
@@ -147,14 +169,24 @@ const OfferCodes = () => {
         data: { data: contextMenu.currentItem.offerCode_ID } // تغییر نام پارامتر به data
       });
       if (response.data.success) {
-        alert('Offer code deleted successfully!');
+        setNotification({
+          icon: "check",
+          content: `کد تخفیف ${contextMenu.currentItem.offerCode_ID} حذف شد`,
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => setNotification(null), 3000);
         setOfferCodes(offerCodes.filter(offerCode => offerCode.offerCode_ID !== contextMenu.currentItem.offerCode_ID));
         setContextMenu({ ...contextMenu, visible: false });
       } else {
         alert('Failed to delete offer code');
       }
     } catch (error) {
-      console.error('Error deleting offer code:', error);
+      setNotification({
+        icon: "xmark",
+        content: "این کد درحال استفاده است!",
+        iconColor: "text-red-500",
+      });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
   
@@ -208,7 +240,7 @@ const OfferCodes = () => {
           title: `افزایش اعتبار ${contextMenu.currentItem.offerCode_ID}`,
           inputs: [
             {
-              title: "تاریخ اعتبار",
+              title: "",
               name: "end_date",
               type: "date",
               validationSchema: Yup.string().required("این فیلد اجباری است"),
@@ -239,7 +271,7 @@ const OfferCodes = () => {
         onToggle={(value) => setSelected(value)}
       />
       {selected === "actives" ? (
-        <ul className="absolute bg-background-elm2 rounded-3xl top-56 right-[50%] translate-x-[50%]">
+        <ul className="absolute bg-background-elm2 p-1 rounded-3xl top-56 right-[50%] translate-x-[50%]">
           {contextMenu.visible && (
             <ContextMenu
               contextMenu={contextMenu}
@@ -291,7 +323,7 @@ const OfferCodes = () => {
                 initialValue: "",
               },
               {
-                title: "تاریخ اعتبار",
+                title: "",
                 name: "end_date",
                 type: "date",
                 validationSchema: Yup.string()
@@ -310,6 +342,13 @@ const OfferCodes = () => {
           inputs={popupContent.inputs}
           onClose={() => setShowPopup(false)}
           handleSubmit={popupContent.onSubmit}
+        />
+      )}
+      {notifcation && (
+        <Notifcation
+          icon={notifcation.icon}
+          content={notifcation.content}
+          iconColor={notifcation.iconColor}
         />
       )}
     </>

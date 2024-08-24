@@ -88,7 +88,48 @@ def check_discount():
             return jsonify({'error': 'Invalid discount code'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+#---------------------------------------------------------------
 
+def add_order(user_id, service_id, login_code, offer_code):
+    conn = pyodbc.connect(
+        'DRIVER={ODBC Driver 17 for SQL Server};'
+        'SERVER=DESKTOP-NL7MQT0;'
+        'DATABASE=radical;'
+        'UID=sa;'
+        'PWD=@Hossein2021'
+    )
+    if offer_code != "null":
+        cursor = conn.cursor()
+        cursor.execute(
+        "INSERT INTO orders (ID_user, ID_service, ID_loginCode, ID_offerCode) VALUES (?, ?, ?, ?)",
+        (user_id, service_id, login_code, offer_code)
+        )
+        conn.commit()
+        conn.close()
+    else:
+        cursor = conn.cursor()
+        cursor.execute(
+        "INSERT INTO orders (ID_user, ID_service, ID_loginCode) VALUES (?, ?, ?)",
+        (user_id, service_id, login_code)
+        )
+        conn.commit()
+        conn.close()
+
+
+@app.route('/api/submit_order', methods=['POST'])
+def submit_order():
+    data = request.get_json()
+    user_id = int(data.get('userId'))
+    services = data.get('checkedServices')
+    login_code = data.get('entercode')
+    offer_code = data.get('offerCode')
+    
+    try:
+        for service_id in services:
+            add_order(user_id, service_id, login_code, offer_code)
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 #-------------------------------------------------------------------------------
     
 @app.route('/api/register', methods=['POST'])
@@ -117,26 +158,26 @@ def register_user():
 
 #-------------------------------------------------------------------------------
 
-@app.route('/api/orders', methods=['POST'])
-def save_order():
-    data = request.get_json()
-    user_id = data.get('userId')
-    entry_code = data.get('enterCode')
-    checked_services = data.get('checkServices')
-    offer_code = data.get('offerCode')
+# @app.route('/api/orders', methods=['POST'])
+# def save_order():
+#     data = request.get_json()
+#     user_id = data.get('userId')
+#     entry_code = data.get('enterCode')
+#     checked_services = data.get('checkServices')
+#     offer_code = data.get('offerCode')
 
-    cursor = conn.cursor()
-    try:
-        # Insert the order into the database
-        cursor.execute('''
-            INSERT INTO orders (ID_user, ID_services, ID_loginCode, ID_offerCode)
-            VALUES (?, ?, ?, ?)
-        ''', (user_id, ','.join(map(str, checked_services)), entry_code, offer_code))
-        conn.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'success': False, 'error': str(e)})
+#     cursor = conn.cursor()
+#     try:
+#         # Insert the order into the database
+#         cursor.execute('''
+#             INSERT INTO orders (ID_user, ID_services, ID_loginCode, ID_offerCode)
+#             VALUES (?, ?, ?, ?)
+#         ''', (user_id, ','.join(map(str, checked_services)), entry_code, offer_code))
+#         conn.commit()
+#         return jsonify({'success': True})
+#     except Exception as e:
+#         conn.rollback()
+#         return jsonify({'success': False, 'error': str(e)})
 #-------------------------------------------------------------------
 
 conn_str = (
@@ -158,7 +199,7 @@ def get_orders():
         SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, oc.offer_price
         FROM orders o
         JOIN services s ON o.ID_service = s.ID
-        JOIN offer_code oc ON o.ID_offerCode = oc.ID 
+        LEFT JOIN offer_code oc ON o.ID_offerCode = oc.ID 
         '''
         cursor.execute(query)
         orders = []
@@ -172,7 +213,6 @@ def get_orders():
                 'disCount_value':row.offer_price,
             }
             orders.append(order)
-        
         cursor.close()
         conn.close()
         return jsonify(orders), 200
@@ -408,10 +448,10 @@ def get_orders_user():
         cursor = conn.cursor()
         
         query = '''
-        SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, oc.offer_price
+        SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, ISNULL(oc.offer_price, 0) as offer_price
         FROM orders o
         JOIN services s ON o.ID_service = s.ID
-        JOIN offer_code oc ON o.ID_offerCode = oc.ID
+        LEFT JOIN offer_code oc ON o.ID_offerCode = oc.ID
         WHERE o.ID_user = ?
         '''
         cursor.execute(query, user_ID)

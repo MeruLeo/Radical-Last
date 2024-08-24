@@ -131,10 +131,54 @@ const Services = () => {
         </section>
       </div>
       <div className="absolute top-[37rem] right-[50%] translate-x-[50%]">
-        <FormComponent btn={<NormalBtn title={`پرداخت`} />} inputs={componentInputs1} />
+        <FormComponent 
+        btn={<NormalBtn title={`پرداخت`} />} 
+        inputs={componentInputs1}
+        onSubmit={handleSubmitOrders} />
       </div>
     </div>
   );
+
+  const handleSubmitOrders  = () => {
+    const userId = localStorage.getItem('userId'); // فرض بر اینکه userId در LocalStorage ذخیره شده است
+    const checkedServices = JSON.parse(localStorage.getItem('checkedServices')) || [];
+    const entercode = localStorage.getItem('entercode');
+    const offerCode = localStorage.getItem('offerCode');
+    
+    axios.post("http://127.0.0.1:5000/api/submit_order", {
+      userId,
+      checkedServices,
+      entercode,
+      offerCode,
+    })
+    .then((response) => {
+      if (response.data.status === 'success') {
+        setNotifcation({
+          icon: "check",
+          content: "سفارش با موفقیت ثبت شد.",
+          iconColor: "text-green-500",
+        });
+        setTimeout(() => {setNotifcation(null)}, 3000);
+      } else {
+        setNotifcation({
+          icon: "xmark",
+          content: "خطایی در ثبت سفارش رخ داده است.",
+          iconColor: "text-red-500",
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("Error submitting order:", error);
+      setNotifcation({
+        icon: "xmark",
+        content: "خطایی در ثبت سفارش رخ داده است.",
+        iconColor: "text-red-500",
+      });
+    })
+    .finally(() => {
+      setTimeout(() => setNotifcation(null), 3000);
+    });
+  };
 
   const applyDiscount = (values) => {
     fetch("http://localhost:5000/api/check_discount", {

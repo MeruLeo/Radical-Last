@@ -58,7 +58,7 @@ const Register = () => {
       .then((response) => {
         if (response.data.success) {
           localStorage.setItem("userId", response.data.id);
-          navigate("/services");
+          navigate("/company");
         } else {
           setNotification({
             icon: "times",
