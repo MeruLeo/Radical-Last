@@ -1,17 +1,18 @@
 from flask import Flask, jsonify, request
-import pyodbc
 from flask_cors import CORS
-import requests
+import mysql.connector
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # اضافه کردن CORS با اجازه دسترسی به همه مبداها
 
-conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2021'
+# اجازه دادن به هر مبدأ برای دسترسی به این سرور
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# اتصال به MariaDB
+conn = mysql.connector.connect(
+    host='localhost',
+    database='radical',
+    user='root',
+    password='@Hossein2020'
 )
 
 @app.route('/api/check_code', methods=['POST'])
@@ -19,26 +20,26 @@ def check_code():
     data = request.get_json()
     code = data.get('code')
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM login_code WHERE ID = ? and number > number_limit', (code,))
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM login_code WHERE ID = %s AND number > number_limit', (code,))
     row = cursor.fetchone()
     
     if row:
-        # Update number_limit field
-        cursor.execute('UPDATE login_code SET number_limit = number_limit + 1 WHERE ID = ?', (code,))
+        # به‌روزرسانی فیلد number_limit
+        cursor.execute('UPDATE login_code SET number_limit = number_limit + 1 WHERE ID = %s', (code,))
         conn.commit()
         return jsonify({'exists': True})
     else:
         return jsonify({'exists': False})
+
  #-------------------------------------------------------------------------   
 
 def get_services():
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-NL7MQT0;'
-        'DATABASE=radical;'
-        'UID=sa;'
-        'PWD=@Hossein2021'
+    conn = mysql.connector.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2020'
     )
     cursor = conn.cursor()
     cursor.execute("SELECT ID, name, price FROM services")
@@ -46,6 +47,7 @@ def get_services():
     conn.close()
     return services
 
+# روت API برای دریافت خدمات
 @app.route('/api/services', methods=['GET'])
 def services():
     try:
@@ -55,24 +57,25 @@ def services():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# تابع برای بررسی کد تخفیف
 def check_discount_code(code):
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-NL7MQT0;'
-        'DATABASE=radical;'
-        'UID=sa;'
-        'PWD=@Hossein2021'
+    conn = mysql.connector.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2020'
     )
     cursor = conn.cursor()
-    cursor.execute("SELECT offer_price, number_limit FROM offer_code WHERE ID=?", code)
+    cursor.execute("SELECT offer_price, number_limit FROM offer_code WHERE ID=%s", (code,))
     discount = cursor.fetchone()
     if discount:
         new_limit = discount[1] + 1
-        cursor.execute("UPDATE offer_code SET number_limit = ? WHERE ID = ?", (new_limit, code))
+        cursor.execute("UPDATE offer_code SET number_limit = %s WHERE ID = %s", (new_limit, code))
         conn.commit()
     conn.close()
     return discount
 
+# روت API برای بررسی کد تخفیف
 @app.route('/api/check_discount', methods=['POST'])
 def check_discount():
     data = request.get_json()
@@ -88,14 +91,6 @@ def check_discount():
 
 #-------------------------------------------------------------------------------
     
-conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2021'
-)
-
 @app.route('/api/register', methods=['POST'])
 def register_user():
     data = request.get_json()
@@ -111,14 +106,15 @@ def register_user():
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO user_profile (name, last_name, phone_number, email) 
-        OUTPUT INSERTED.id 
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     ''', (name, lastName, phonenumber, email))
     
-    inserted_id = cursor.fetchone()[0]
+    # دریافت ID درج شده
+    inserted_id = cursor.lastrowid
     conn.commit()
     
     return jsonify({'success': True, 'id': inserted_id})
+
 #-------------------------------------------------------------------------------
 
 @app.route('/api/orders', methods=['POST'])
@@ -145,10 +141,10 @@ def save_order():
 
 conn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
+    'SERVER=DESKTOP-KAQD1TM;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2021'
+    'PWD=@Hossein2023'
 )
 
 
@@ -188,10 +184,10 @@ def get_orders():
 #-----------------------------------------------------
 conn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
+    'SERVER=DESKTOP-KAQD1TM;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2021'
+    'PWD=@Hossein2023'
 )
 
 @app.route('/api/admin_loginCode', methods=['GET'])
@@ -225,10 +221,10 @@ def get_loginCode():
 #-------------------------------------------------------------------------------
 conn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
+    'SERVER=DESKTOP-KAQD1TM;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2021'
+    'PWD=@Hossein2023'
 )
 
 @app.route('/api/admin_offerCode', methods=['GET'])
@@ -277,10 +273,10 @@ def save_login_code():
         # اتصال به دیتابیس و ذخیره اطلاعات
         conn_str = (
             'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=DESKTOP-NL7MQT0;'
+            'SERVER=DESKTOP-KAQD1TM;'
             'DATABASE=radical;'
             'UID=sa;'
-            'PWD=@Hossein2021'
+            'PWD=@Hossein2023'
         )
 
         with pyodbc.connect(conn_str) as conn:
@@ -311,10 +307,10 @@ def save_offer_code():
         # اتصال به دیتابیس و ذخیره اطلاعات
         conn_str = (
             'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=DESKTOP-NL7MQT0;'
+            'SERVER=DESKTOP-KAQD1TM;'
             'DATABASE=radical;'
             'UID=sa;'
-            'PWD=@Hossein2021'
+            'PWD=@Hossein2023'
         )
 
         with pyodbc.connect(conn_str) as conn:
@@ -331,10 +327,10 @@ def save_offer_code():
 #------------------------------------------------------------------
 conn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
+    'SERVER=DESKTOP-KAQD1TM;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2021'
+    'PWD=@Hossein2023'
 )
 
 @app.route('/api/show_services', methods=['GET'])
@@ -374,10 +370,10 @@ def save_service():
         # اتصال به دیتابیس و ذخیره اطلاعات
         conn_str = (
             'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=DESKTOP-NL7MQT0;'
+            'SERVER=DESKTOP-KAQD1TM;'
             'DATABASE=radical;'
             'UID=sa;'
-            'PWD=@Hossein2021'
+            'PWD=@Hossein2023'
         )
 
         with pyodbc.connect(conn_str) as conn:
@@ -395,10 +391,10 @@ def save_service():
     
 conn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
+    'SERVER=DESKTOP-KAQD1TM;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2021'
+    'PWD=@Hossein2023'
 )
 
 @app.route('/api/orders_users', methods=['GET'])
@@ -441,10 +437,10 @@ def get_orders_user():
 #--------------------------------------------------------------------------------
 conn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
+    'SERVER=DESKTOP-KAQD1TM;'
     'DATABASE=radical;'
     'UID=sa;'
-    'PWD=@Hossein2021'
+    'PWD=@Hossein2023'
 )
 
 @app.route('/api/delete_service', methods=['DELETE'])
@@ -472,12 +468,11 @@ def delete_service():
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while deleting the service'}), 500
 #-----------------------------------------------------------------
-conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2021'
+conn = mysql.connector.connect(
+    host='localhost',
+    database='radical',
+    user='root',
+    password='@Hossein2020'
 )
 
 @app.route('/api/edit_service', methods=['POST'])
@@ -516,12 +511,11 @@ def edit_service_price():
     
 #----------------------------------------------------------------------------
 
-conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2021'
+conn = mysql.connector.connect(
+    host='localhost',
+    database='radical',
+    user='root',
+    password='@Hossein2020'
 )
 
 @app.route('/api/edit_offerCode', methods=['POST'])
@@ -707,12 +701,11 @@ def verify_payment():
     else:
         return jsonify({'status': 'NOK'}), 500
 #----------------------------------------------------------------------
-conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-NL7MQT0;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2021'
+conn = mysql.connector.connect(
+    host='localhost',
+    database='radical',
+    user='root',
+    password='@Hossein2020'
 )
 
 @app.route('/api/company', methods=['POST'])
