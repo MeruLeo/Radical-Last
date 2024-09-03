@@ -12,7 +12,7 @@ conn = mysql.connector.connect(
     host='localhost',
     database='radical',
     user='root',
-    password='@Hossein2020'
+    password='@Hossein2023'
 )
 
 @app.route('/api/check_code', methods=['POST'])
