@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import mysql.connector
+import pymysql
+import pymysql.cursors
 
 app = Flask(__name__)
 
@@ -8,19 +9,19 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # اتصال به MariaDB
-conn = mysql.connector.connect(
+conn = pymysql.connect(
     host='localhost',
     database='radical',
     user='root',
-    password='@Hossein2023'
+    password='@Hossein2023',
+    cursorclass=pymysql.cursors.DictCursor
 )
 
 @app.route('/api/check_code', methods=['POST'])
 def check_code():
     data = request.get_json()
     code = data.get('code')
-    
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute('SELECT * FROM login_code WHERE ID = %s AND number > number_limit', (code,))
     row = cursor.fetchone()
     
@@ -35,11 +36,11 @@ def check_code():
  #-------------------------------------------------------------------------   
 
 def get_services():
-    conn = mysql.connector.connect(
+    conn = pymysql.connect(
         host='localhost',
         database='radical',
         user='root',
-        password='@Hossein2020'
+        password='@Hossein2023'
     )
     cursor = conn.cursor()
     cursor.execute("SELECT ID, name, price FROM services")
@@ -59,11 +60,11 @@ def services():
 
 # تابع برای بررسی کد تخفیف
 def check_discount_code(code):
-    conn = mysql.connector.connect(
+    conn = pymysql.connect(
         host='localhost',
         database='radical',
         user='root',
-        password='@Hossein2020'
+        password='@Hossein2023'
     )
     cursor = conn.cursor()
     cursor.execute("SELECT offer_price, number_limit FROM offer_code WHERE ID=%s", (code,))
@@ -91,29 +92,33 @@ def check_discount():
 #---------------------------------------------------------------
 
 def add_order(user_id, service_id, login_code, offer_code):
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=DESKTOP-NL7MQT0;'
-        'DATABASE=radical;'
-        'UID=sa;'
-        'PWD=@Hossein2021'
+    conn = pymysql.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2023'
     )
-    if offer_code != "null":
+    
+    try:
         cursor = conn.cursor()
-        cursor.execute(
-        "INSERT INTO orders (ID_user, ID_service, ID_loginCode, ID_offerCode) VALUES (?, ?, ?, ?)",
-        (user_id, service_id, login_code, offer_code)
-        )
+        if offer_code != "null":
+            cursor.execute(
+                "INSERT INTO orders (ID_user, ID_service, ID_loginCode, ID_offerCode) VALUES (%s, %s, %s, %s)",
+                (user_id, service_id, login_code, offer_code)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO orders (ID_user, ID_service, ID_loginCode) VALUES (%s, %s, %s)",
+                (user_id, service_id, login_code)
+            )
+        
         conn.commit()
-        conn.close()
-    else:
-        cursor = conn.cursor()
-        cursor.execute(
-        "INSERT INTO orders (ID_user, ID_service, ID_loginCode) VALUES (?, ?, ?)",
-        (user_id, service_id, login_code)
-        )
-        conn.commit()
-        conn.close()
+    except Exception as e:
+        conn.rollback()  # اگر خطایی رخ دهد، تراکنش لغو می‌شود.
+        raise e
+    finally:
+        cursor.close()  # بستن cursor
+        conn.close()  # بستن اتصال به دیتابیس
 
 
 @app.route('/api/submit_order', methods=['POST'])
@@ -158,45 +163,23 @@ def register_user():
 
 #-------------------------------------------------------------------------------
 
-# @app.route('/api/orders', methods=['POST'])
-# def save_order():
-#     data = request.get_json()
-#     user_id = data.get('userId')
-#     entry_code = data.get('enterCode')
-#     checked_services = data.get('checkServices')
-#     offer_code = data.get('offerCode')
-
-#     cursor = conn.cursor()
-#     try:
-#         # Insert the order into the database
-#         cursor.execute('''
-#             INSERT INTO orders (ID_user, ID_services, ID_loginCode, ID_offerCode)
-#             VALUES (?, ?, ?, ?)
-#         ''', (user_id, ','.join(map(str, checked_services)), entry_code, offer_code))
-#         conn.commit()
-#         return jsonify({'success': True})
-#     except Exception as e:
-#         conn.rollback()
-#         return jsonify({'success': False, 'error': str(e)})
-#-------------------------------------------------------------------
-
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2023'
-)
-
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2023',
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
 @app.route('/api/orders', methods=['GET'])
 def get_orders():
     try:
-        conn = pyodbc.connect(conn_str)
+        conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         query = '''
-        SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, oc.offer_price
+        SELECT o.ID_offerCode, o.ID_loginCode, s.name AS service_name, s.price AS service_price, o.reg_date, oc.offer_price
         FROM orders o
         JOIN services s ON o.ID_service = s.ID
         LEFT JOIN offer_code oc ON o.ID_offerCode = oc.ID 
@@ -205,96 +188,105 @@ def get_orders():
         orders = []
         for row in cursor.fetchall():
             order = {
-                'ID_offerCode': row.ID_offerCode,
-                'ID_loginCode': row.ID_loginCode,
-                'service_name': row.service_name,
-                'service_price': row.service_price,
-                'reg_date': row.reg_date,
-                'disCount_value':row.offer_price,
+                'ID_offerCode': row['ID_offerCode'],
+                'ID_loginCode': row['ID_loginCode'],
+                'service_name': row['service_name'],
+                'service_price': row['service_price'],
+                'reg_date': row['reg_date'],
+                'disCount_value': row['offer_price'],
             }
             orders.append(order)
         cursor.close()
         conn.close()
         return jsonify(orders), 200
-    
-    except Exception as e:
-        print(f'Error: {e}')
+
+    except pymysql.MySQLError as e:
+        print(f'Error: {e}')  # چاپ خطا برای عیب‌یابی
         return jsonify({'error': 'An error occurred while fetching orders'}), 500
     
 #-----------------------------------------------------
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2023'
-)
 
 @app.route('/api/admin_loginCode', methods=['GET'])
 def get_loginCode():
     try:
-        conn = pyodbc.connect(conn_str)
+        # اتصال به دیتابیس MariaDB
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',  # نام دیتابیس خود را بررسی کنید
+            user='root',  # نام کاربری صحیح را قرار دهید
+            password='@Hossein2023',  # رمزعبور صحیح را قرار دهید
+            cursorclass=pymysql.cursors.DictCursor
+        )
         cursor = conn.cursor()
         
+        # کوئری برای دریافت اطلاعات از جدول login_code
         query = '''
         SELECT ID, number, number_limit, end_date
         FROM login_code
         '''
         cursor.execute(query)
+        
+        # تبدیل نتایج به لیست دیکشنری‌ها
         show_loginCode = []
         for row in cursor.fetchall():
             login_code = {
-                'loginCode_ID': row.ID,
-                'number_loginCode': row.number,
-                'numberLimit_loginCode': row.number_limit,
-                'endDate_loginCode': row.end_date,
+                'loginCode_ID': row['ID'],
+                'number_loginCode': row['number'],
+                'numberLimit_loginCode': row['number_limit'],
+                'endDate_loginCode': row['end_date'],
             }
             show_loginCode.append(login_code)
         
         cursor.close()
         conn.close()
+        
+        # برگرداندن نتیجه به فرمت JSON
         return jsonify(show_loginCode), 200
     
     except Exception as e:
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while fetching login codes'}), 500
 #-------------------------------------------------------------------------------
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2023'
-)
 
 @app.route('/api/admin_offerCode', methods=['GET'])
 def get_offerCode():
     try:
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
-        
-        query = '''
-        SELECT ID, number, number_limit, end_date
-        FROM offer_code
-        '''
-        cursor.execute(query)
-        show_offerCode = []
-        for row in cursor.fetchall():
-            offer_code = {
-                'offerCode_ID': row.ID,
-                'number_offerCode': row.number,
-                'numberLimit_offerCode': row.number_limit,
-                'endDate_offerCode': row.end_date,
-            }
-            show_offerCode.append(offer_code)
-        
-        cursor.close()
-        conn.close()
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        with conn.cursor() as cursor:
+            # اجرای کوئری برای دریافت کدهای تخفیف
+            query = '''
+            SELECT ID, number, number_limit, end_date
+            FROM offer_code
+            '''
+            cursor.execute(query)
+            show_offerCode = []
+            
+            # پیمایش نتایج و ساخت دیکشنری برای هر رکورد
+            for row in cursor.fetchall():
+                offer_code = {
+                    'offerCode_ID': row['ID'],
+                    'number_offerCode': row['number'],
+                    'numberLimit_offerCode': row['number_limit'],
+                    'endDate_offerCode': row['end_date'],
+                }
+                show_offerCode.append(offer_code)
+
+        conn.close()  # بستن اتصال دیتابیس
         return jsonify(show_offerCode), 200
     
-    except Exception as e:
+    except pymysql.MySQLError as e:
+        # مدیریت خطاهای دیتابیس
         print(f'Error: {e}')
-        return jsonify({'error': 'An error occurred while fetching login codes'}), 500
+        return jsonify({'error': 'An error occurred while fetching offer codes', 'details': str(e)}), 500
+
 #------------------------------------------------------------------------------
 
 import datetime
@@ -311,23 +303,25 @@ def save_login_code():
 
     try:
         # اتصال به دیتابیس و ذخیره اطلاعات
-        conn_str = (
-            'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=DESKTOP-KAQD1TM;'
-            'DATABASE=radical;'
-            'UID=sa;'
-            'PWD=@Hossein2023'
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',  # نام دیتابیس را بررسی کنید
+            user='root',  # نام کاربری صحیح را قرار دهید
+            password='@Hossein2023',  # رمزعبور صحیح را قرار دهید
+            cursorclass=pymysql.cursors.DictCursor
         )
+        
+        with conn.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO login_code (ID, number, end_date, number_limit)
+                VALUES (%s, %s, %s, %s)
+            ''', (login_code_id, number, formatted_date, num_limit))
+            conn.commit()  # تغییرات را به دیتابیس اعمال می‌کند
 
-        with pyodbc.connect(conn_str) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute('''
-                    INSERT INTO login_code (ID, number, end_date, number_limit)
-                    VALUES (?, ?, ?, ?)
-                ''', (login_code_id, number, end_date, num_limit))
-                conn.commit()
+        conn.close()
         return jsonify({'success': True})
-    except pyodbc.Error as e:
+    
+    except pymysql.MySQLError as e:
         print(f"Error: {str(e)}")  # چاپ خطا
         return jsonify({'success': False, 'error': str(e)})
 #----------------------------------------------------------------
@@ -345,127 +339,131 @@ def save_offer_code():
 
     try:
         # اتصال به دیتابیس و ذخیره اطلاعات
-        conn_str = (
-            'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=DESKTOP-KAQD1TM;'
-            'DATABASE=radical;'
-            'UID=sa;'
-            'PWD=@Hossein2023'
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
         )
 
-        with pyodbc.connect(conn_str) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute('''
-                    INSERT INTO offer_code (ID, number, end_date, number_limit, offer_price)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (offer_code_id, number, formatted_date, num_limit, offer_price))
-                conn.commit()
+        with conn.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO offer_code (ID, number, end_date, number_limit, offer_price)
+                VALUES (%s, %s, %s, %s, %s)
+            ''', (offer_code_id, number, formatted_date, num_limit, offer_price))
+            conn.commit()
+        
+        conn.close()  # بستن اتصال دیتابیس
         return jsonify({'success': True})
-    except pyodbc.Error as e:
+    
+    except pymysql.MySQLError as e:
         print(f"Error: {str(e)}")  # چاپ خطا
         return jsonify({'success': False, 'error': str(e)})
+
 #------------------------------------------------------------------
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2023'
-)
 
 @app.route('/api/show_services', methods=['GET'])
 def get_services1():
     try:
-        conn = pyodbc.connect(conn_str)
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
         cursor = conn.cursor()
         
+        # اجرای کوئری
         query = '''
         SELECT name, price
         FROM services
         '''
         cursor.execute(query)
+        
+        # پردازش نتایج
         show_services = []
         for row in cursor.fetchall():
             services = {
-                'service_name': row.name,
-                'service_price': row.price,
+                'service_name': row['name'],
+                'service_price': row['price'],
             }
             show_services.append(services)
         
-        cursor.close()
-        conn.close()
         return jsonify(show_services), 200
     
-    except Exception as e:
+    except pymysql.MySQLError as e:
+        # مدیریت خطا
         print(f'Error: {e}')
-        return jsonify({'error': 'An error occurred while fetching login codes'}), 500
+        return jsonify({'error': 'An error occurred while fetching services'}), 500
+    
+    finally:
+        cursor.close()
+        conn.close()
 #---------------------------------------------------------------------------------
 @app.route('/api/save_service', methods=['POST'])
 def save_service():
     data = request.get_json()
-    name = data['name']
-    price = data['price']
+    name = data.get('name')
+    price = data.get('price')
 
     try:
         # اتصال به دیتابیس و ذخیره اطلاعات
-        conn_str = (
-            'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=DESKTOP-KAQD1TM;'
-            'DATABASE=radical;'
-            'UID=sa;'
-            'PWD=@Hossein2023'
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
         )
 
-        with pyodbc.connect(conn_str) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute('''
-                    INSERT INTO services (name, price)
-                    VALUES (?, ?)
-                ''', (name, price))
-                conn.commit()
+        with conn.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO services (name, price)
+                VALUES (%s, %s)
+            ''', (name, price))
+            conn.commit()
+        
         return jsonify({'success': True})
-    except pyodbc.Error as e:
+
+    except pymysql.MySQLError as e:
         print(f"Error: {str(e)}")  # چاپ خطا
         return jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        conn.close()
 #---------------------------------------------------------------
     
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2023'
-)
-
 @app.route('/api/orders_users', methods=['GET'])
 def get_orders_user():
     try:
-        user_ID = request.args.get('user_ID')  # Get user_ID from request parameters
+        user_ID = request.args.get('user_ID')
         if not user_ID:
             return jsonify({'error': 'user_ID parameter is required'}), 400
         
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        cursor = conn.cursor(pymysql.cursors.DictCursor)  # DictCursor allows fetching results as dictionaries
         
         query = '''
-        SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, o.reg_date, ISNULL(oc.offer_price, 0) as offer_price
-        FROM orders o
-        JOIN services s ON o.ID_service = s.ID
-        LEFT JOIN offer_code oc ON o.ID_offerCode = oc.ID
-        WHERE o.ID_user = ?
+            SELECT o.ID_offerCode, o.ID_loginCode, s.name as service_name, s.price as service_price, 
+                o.reg_date, IFNULL(oc.offer_price, 0) as offer_price
+            FROM orders o
+            JOIN services s ON o.ID_service = s.ID
+            LEFT JOIN offer_code oc ON o.ID_offerCode = oc.ID
+            WHERE o.ID_user = %s
         '''
-        cursor.execute(query, user_ID)
-        orders = []
-        for row in cursor.fetchall():
-            order = {
-                'ID_offerCode': row.ID_offerCode,
-                'ID_loginCode': row.ID_loginCode,
-                'service_name': row.service_name,
-                'service_price': row.service_price,
-                'reg_date': row.reg_date,
-                'disCount_value': row.offer_price,
-            }
-            orders.append(order)
+
+        cursor.execute(query, (user_ID,))
+        orders = cursor.fetchall()  # Fetch all results at once
         
         cursor.close()
         conn.close()
@@ -474,14 +472,17 @@ def get_orders_user():
     except Exception as e:
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while fetching orders'}), 500
+    
 #--------------------------------------------------------------------------------
-conn_str = (
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=DESKTOP-KAQD1TM;'
-    'DATABASE=radical;'
-    'UID=sa;'
-    'PWD=@Hossein2023'
-)
+
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2023',
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
 @app.route('/api/delete_service', methods=['DELETE'])
 def delete_service():
@@ -492,11 +493,11 @@ def delete_service():
         if not service_name:
             return jsonify({'error': 'Service name is required'}), 400
 
-        conn = pyodbc.connect(conn_str)
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        query = "DELETE FROM services WHERE name = ?"
-        cursor.execute(query, service_name)
+        query = "DELETE FROM services WHERE name = %s"
+        cursor.execute(query, (service_name,))  # توجه به استفاده از tuple
 
         conn.commit()
 
@@ -504,16 +505,10 @@ def delete_service():
         conn.close()
         return jsonify({'message': 'Service deleted successfully!'}), 200
 
-    except Exception as e:
+    except pymysql.MySQLError as e:
         print(f'Error: {e}')
         return jsonify({'error': 'An error occurred while deleting the service'}), 500
 #-----------------------------------------------------------------
-conn = mysql.connector.connect(
-    host='localhost',
-    database='radical',
-    user='root',
-    password='@Hossein2020'
-)
 
 @app.route('/api/edit_service', methods=['POST'])
 def edit_service():
@@ -521,16 +516,41 @@ def edit_service():
     old_name = data.get('old_name')
     new_name = data.get('new_name')
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM services WHERE name = ?', (old_name,))
-    row = cursor.fetchone()
+    conn = pymysql.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2023',
+        cursorclass=pymysql.cursors.DictCursor
+    )
     
-    if row:
-        cursor.execute('UPDATE services SET name = ? WHERE name = ?', (new_name, old_name))
-        conn.commit()
-        return jsonify({'status': 'success', 'message': 'Service updated successfully'})
-    else:
-        return jsonify({'status': 'error', 'message': 'Service not found'})
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM services WHERE name = %s', (old_name,))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('UPDATE services SET name = %s WHERE name = %s', (new_name, old_name))
+            conn.commit()
+            return jsonify({'status': 'success', 'message': 'Service updated successfully'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Service not found'})
+    
+    except pymysql.MySQLError as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+    
+    finally:
+        conn.close()
+
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        database='radical',
+        user='root',
+        password='@Hossein2023',
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
 @app.route('/api/edit_service_price', methods=['POST'])
 def edit_service_price():
@@ -538,42 +558,62 @@ def edit_service_price():
     name = data.get('name')
     new_price = data.get('new_price')
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM services WHERE name = ?', (name,))
-    row = cursor.fetchone()
+    conn = get_db_connection()
     
-    if row:
-        cursor.execute('UPDATE services SET price = ? WHERE name = ?', (new_price, name))
-        conn.commit()
-        return jsonify({'status': 'success', 'message': 'Service price updated successfully'})
-    else:
-        return jsonify({'status': 'error', 'message': 'Service not found'})
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM services WHERE name = %s', (name,))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('UPDATE services SET price = %s WHERE name = %s', (new_price, name))
+            conn.commit()
+            return jsonify({'status': 'success', 'message': 'Service price updated successfully'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Service not found'})
+    
+    except pymysql.MySQLError as e:
+        print(f"Error: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)})
+    
+    finally:
+        conn.close()
     
 #----------------------------------------------------------------------------
-
-conn = mysql.connector.connect(
-    host='localhost',
-    database='radical',
-    user='root',
-    password='@Hossein2020'
-)
 
 @app.route('/api/edit_offerCode', methods=['POST'])
 def edit_offer_code():
     data = request.get_json()
-    old_id = data.get('old_id') # تغییر نام پارامتر به old_id
-    new_id = data.get('new_id') # تغییر نام پارامتر به new_id
+    old_id = data.get('old_id')  # تغییر نام پارامتر به old_id
+    new_id = data.get('new_id')  # تغییر نام پارامتر به new_id
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (old_id,))
-    row = cursor.fetchone()
+    try:
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM offer_code WHERE ID = %s', (old_id,))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('UPDATE offer_code SET ID = %s WHERE ID = %s', (new_id, old_id))
+            conn.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Offer code not found'})
     
-    if row:
-        cursor.execute('UPDATE offer_code SET ID = ? WHERE ID = ?', (new_id, old_id))
-        conn.commit()
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'message': 'Offer code not found'})
+    except pymysql.MySQLError as e:
+        return jsonify({'success': False, 'error': str(e)})
+    
+    finally:
+        cursor.close()
+        conn.close()  # بستن اتصال دیتابیس
 
 
 @app.route('/api/increase_users', methods=['POST'])
@@ -582,16 +622,33 @@ def increase_users():
     ID = data.get('code')  # مطمئن شوید که این نام با نام ارسالی از سمت فرانت‌اند همخوانی دارد
     new_number = data.get('new_number')
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
-    row = cursor.fetchone()
+    try:
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM offer_code WHERE ID = %s', (ID,))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('UPDATE offer_code SET number = %s WHERE ID = %s', (new_number, ID))
+            conn.commit()
+            return jsonify({'success': True, 'message': 'Number of users updated successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Offer code not found'})
     
-    if row:
-        cursor.execute('UPDATE offer_code SET number = ? WHERE ID = ?', (new_number, ID))
-        conn.commit()
-        return jsonify({'success': True, 'message': 'Number of users updated successfully'})
-    else:
-        return jsonify({'success': False, 'message': 'Offer code not found'})
+    except pymysql.MySQLError as e:
+        return jsonify({'success': False, 'error': str(e)})
+    
+    finally:
+        cursor.close()
+        conn.close()  # بستن اتصال دیتابیس
 
 
 @app.route('/api/increase_validity', methods=['POST'])
@@ -600,33 +657,67 @@ def increase_validity():
     ID = data.get('code')  # مطمئن شوید که این نام با نام ارسالی از سمت فرانت‌اند همخوانی دارد
     new_date = data.get('new_date')
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
-    row = cursor.fetchone()
+    try:
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM offer_code WHERE ID = %s', (ID,))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('UPDATE offer_code SET end_date = %s WHERE ID = %s', (new_date, ID))
+            conn.commit()
+            return jsonify({'success': True, 'message': 'End date updated successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Offer code not found'})
     
-    if row:
-        cursor.execute('UPDATE offer_code SET end_date = ? WHERE ID = ?', (new_date, ID))
-        conn.commit()
-        return jsonify({'success': True, 'message': 'End date updated successfully'})
-    else:
-        return jsonify({'success': False, 'message': 'Offer code not found'})
-
+    except pymysql.MySQLError as e:
+        return jsonify({'success': False, 'error': str(e)})
+    
+    finally:
+        cursor.close()
+        conn.close()  # بستن اتصال دیتابیس
 
 @app.route('/api/delete_offerCode', methods=['DELETE'])
 def delete_offer_code():
     data = request.get_json()
-    ID = data.get('data') # تغییر نام پارامتر به data
+    ID = data.get('data')  # تغییر نام پارامتر به data
     
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM offer_code WHERE ID = ?', (ID,))
-    row = cursor.fetchone()
+    try:
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',
+            user='root',
+            password='@Hossein2023',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM offer_code WHERE ID = %s', (ID,))
+        row = cursor.fetchone()
+        
+        if row:
+            cursor.execute('DELETE FROM offer_code WHERE ID = %s', (ID,))
+            conn.commit()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Offer code not found'})
     
-    if row:
-        cursor.execute('DELETE FROM offer_code WHERE ID = ?', (ID,))
-        conn.commit()
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'message': 'Offer code not found'})
+    except pymysql.MySQLError as e:
+        return jsonify({'success': False, 'error': str(e)})
+    
+    finally:
+        cursor.close()
+        conn.close()  # بستن اتصال دیتابیس
+
     
 #-----------------------------------------------------------------------
 @app.route('/api/edit_loginCode', methods=['POST'])
@@ -636,11 +727,24 @@ def edit_login_code_route():
     new_code = data.get('new_code')
 
     try:
-        cursor = conn.cursor()
-        cursor.execute("UPDATE login_code SET ID = ? WHERE ID = ?", (new_code, old_code))
-        conn.commit()
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',  # نام دیتابیس را بررسی کنید
+            user='root',  # نام کاربری صحیح را قرار دهید
+            password='@Hossein2023',  # رمز عبور صحیح را قرار دهید
+            cursorclass=pymysql.cursors.DictCursor
+        )
+        
+        with conn.cursor() as cursor:
+            # اجرای دستور SQL برای به‌روزرسانی کد
+            cursor.execute("UPDATE login_code SET ID = %s WHERE ID = %s", (new_code, old_code))
+            conn.commit()  # تغییرات را به دیتابیس اعمال می‌کند
+        
+        conn.close()
         return jsonify({'success': True})
-    except Exception as e:
+    
+    except pymysql.MySQLError as e:
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/increase_users_log', methods=['POST'])
@@ -650,17 +754,33 @@ def increase_users_route():
     new_number = data.get('new_number')
 
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM login_code WHERE ID = ?", (code,))
-        row = cursor.fetchone()
-        if row:
-            cursor.execute("UPDATE login_code SET number = ? WHERE ID = ?", (new_number, code))
-            conn.commit()
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'Login code not found'})
-    except Exception as e:
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',  # نام دیتابیس خود را جایگزین کنید
+            user='root',  # نام کاربری دیتابیس خود را جایگزین کنید
+            password='@Hossein2023',  # رمز عبور صحیح را وارد کنید
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        with conn.cursor() as cursor:
+            # بررسی وجود کد ورود در جدول login_code
+            cursor.execute("SELECT * FROM login_code WHERE ID = %s", (code,))
+            row = cursor.fetchone()
+            if row:
+                # به‌روزرسانی تعداد کاربران برای کد ورود
+                cursor.execute("UPDATE login_code SET number = %s WHERE ID = %s", (new_number, code))
+                conn.commit()  # اعمال تغییرات در دیتابیس
+                return jsonify({'success': True})
+            else:
+                return jsonify({'success': False, 'error': 'Login code not found'})
+        
+        conn.close()  # بستن اتصال دیتابیس
+    
+    except pymysql.MySQLError as e:
+        # مدیریت خطاهای دیتابیس
         return jsonify({'success': False, 'error': str(e)})
+
 
 @app.route('/api/increase_validity_log', methods=['POST'])
 def increase_validity_route():
@@ -669,31 +789,61 @@ def increase_validity_route():
     new_date = data.get('new_date')
 
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM login_code WHERE ID = ?", (code,))
-        row = cursor.fetchone()
-        if row:
-            cursor.execute("UPDATE login_code SET end_date = ? WHERE ID = ?", (new_date, code))
-            conn.commit()
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'Login code not found'})
-    except Exception as e:
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',  # نام دیتابیس خود را جایگزین کنید
+            user='root',  # نام کاربری دیتابیس خود را جایگزین کنید
+            password='@Hossein2023',  # رمز عبور صحیح را وارد کنید
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        with conn.cursor() as cursor:
+            # بررسی وجود کد ورود در جدول login_code
+            cursor.execute("SELECT * FROM login_code WHERE ID = %s", (code,))
+            row = cursor.fetchone()
+            if row:
+                # به‌روزرسانی تاریخ انقضا برای کد ورود
+                cursor.execute("UPDATE login_code SET end_date = %s WHERE ID = %s", (new_date, code))
+                conn.commit()  # اعمال تغییرات در دیتابیس
+                return jsonify({'success': True})
+            else:
+                return jsonify({'success': False, 'error': 'Login code not found'})
+        
+        conn.close()  # بستن اتصال دیتابیس
+    
+    except pymysql.MySQLError as e:
+        # مدیریت خطاهای دیتابیس
         return jsonify({'success': False, 'error': str(e)})
+
 
 @app.route('/api/delete_loginCode', methods=['DELETE'])
 def delete_login_code_route():
-    # Your deletion logic here
     data = request.get_json()
     code = data.get('code')
 
     try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM login_code WHERE ID = ?", (code,))
-        conn.commit()
+        # اتصال به دیتابیس
+        conn = pymysql.connect(
+            host='localhost',
+            database='radical',  # نام دیتابیس خود را جایگزین کنید
+            user='root',  # نام کاربری دیتابیس خود را جایگزین کنید
+            password='@Hossein2023',  # رمز عبور صحیح را وارد کنید
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+        with conn.cursor() as cursor:
+            # حذف کد ورود از جدول login_code
+            cursor.execute("DELETE FROM login_code WHERE ID = %s", (code,))
+            conn.commit()  # اعمال تغییرات در دیتابیس
+
+        conn.close()  # بستن اتصال دیتابیس
         return jsonify({'success': True})
-    except Exception as e:
+    
+    except pymysql.MySQLError as e:
+        # مدیریت خطاهای دیتابیس
         return jsonify({'success': False, 'error': str(e)})
+
 #---------------------------------------------------------
 
 
@@ -741,13 +891,6 @@ def verify_payment():
     else:
         return jsonify({'status': 'NOK'}), 500
 #----------------------------------------------------------------------
-conn = mysql.connector.connect(
-    host='localhost',
-    database='radical',
-    user='root',
-    password='@Hossein2020'
-)
-
 @app.route('/api/company', methods=['POST'])
 def add_company_info():
     data = request.get_json()
@@ -761,14 +904,19 @@ def add_company_info():
     web_site = data.get('web_site')
 
     cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO information_company (ID_user, name, year, size, address, start_market, vision_market, web_site)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (ID_user, name, year, size, address, start_market, vision_market, web_site))
-    
-    conn.commit()
-    
-    return jsonify({'success': True, 'message': 'Company information added successfully!'})
+    try:
+        cursor.execute('''
+            INSERT INTO information_company (ID_user, name, year, size, address, start_market, vision_market, web_site)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (ID_user, name, year, size, address, start_market, vision_market, web_site))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Company information added successfully!'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+    finally:
+        cursor.close()
 
 
 

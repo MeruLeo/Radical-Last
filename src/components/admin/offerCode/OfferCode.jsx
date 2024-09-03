@@ -28,7 +28,7 @@ const OfferCodes = () => {
   useEffect(() => {
     const fetchOfferCodes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/admin_offerCode');
+        const response = await axios.get('http://127.0.0.1:5000/api/admin_offerCode');
         setOfferCodes(response.data);
       } catch (error) {
         console.error('Error fetching offer codes:', error);
@@ -58,7 +58,7 @@ const OfferCodes = () => {
 
   const handleSubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/save_offerCode', {
+      const response = await axios.post('http://127.0.0.1:5000/api/save_offerCode', {
         ID: values["new-offer-code"],
         number: values["count-people1"],
         end_date: values["end_date"],
@@ -81,7 +81,7 @@ const OfferCodes = () => {
 
   const handleEditOfferCodeSubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/edit_offerCode', {
+      const response = await axios.post('http://127.0.0.1:5000/api/edit_offerCode', {
         old_id: contextMenu.currentItem.offerCode_ID, // تغییر نام پارامتر به old_id
         new_id: values['edit-offer-code'], // تغییر نام پارامتر به new_id
       });
@@ -109,7 +109,7 @@ const OfferCodes = () => {
 
   const handleIncreaseUsersSubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/increase_users', {
+      const response = await axios.post('http://127.0.0.1:5000/api/increase_users', {
         code: contextMenu.currentItem.offerCode_ID,
         new_number: values['count-people'],
       });
@@ -137,7 +137,7 @@ const OfferCodes = () => {
 
   const handleIncreaseValiditySubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/increase_validity', {
+      const response = await axios.post('http://127.0.0.1:5000/api/increase_validity', {
         code: contextMenu.currentItem.offerCode_ID,
         new_date: values['end_date'],
       });
@@ -165,7 +165,7 @@ const OfferCodes = () => {
 
   const handleDeleteOfferCode = async () => {
     try {
-      const response = await axios.delete('http://localhost:5000/api/delete_offerCode', {
+      const response = await axios.delete('http://127.0.0.1:5000/api/delete_offerCode', {
         data: { data: contextMenu.currentItem.offerCode_ID } // تغییر نام پارامتر به data
       });
       if (response.data.success) {

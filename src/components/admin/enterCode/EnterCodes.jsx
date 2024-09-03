@@ -28,7 +28,7 @@ const EnterCodes = () => {
   useEffect(() => {
     const fetchLoginCodes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/admin_loginCode');
+        const response = await axios.get('http://127.0.0.1:5000/api/admin_loginCode');
         setLoginCodes(response.data);
       } catch (error) {
         console.error('Error fetching login codes:', error);
@@ -55,7 +55,7 @@ const EnterCodes = () => {
   const handleSubmit = async (formData) => {
     const { new_enter_code, count_people, date_limit } = formData;
     try {
-      const response = await axios.post('http://localhost:5000/api/save_loginCode', {
+      const response = await axios.post('http://127.0.0.1:5000/api/save_loginCode', {
         ID: new_enter_code,
         number: count_people,
         end_date: date_limit,
@@ -83,7 +83,7 @@ const EnterCodes = () => {
 
   const handleEditLoginCodeSubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/edit_loginCode', {
+      const response = await axios.post('http://127.0.0.1:5000/api/edit_loginCode', {
         old_code: contextMenu.currentItem,
         new_code: values['edit-login-code'],
       });
@@ -115,7 +115,7 @@ const EnterCodes = () => {
 
   const handleIncreaseUsersSubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/increase_users_log', {
+      const response = await axios.post('http://127.0.0.1:5000/api/increase_users_log', {
         code: contextMenu.currentItem,
         new_number: values['count-people'],
       });
@@ -147,7 +147,7 @@ const EnterCodes = () => {
 
   const handleIncreaseValiditySubmit = async (values) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/increase_validity_log', {
+      const response = await axios.post('http://127.0.0.1:5000/api/increase_validity_log', {
         code: contextMenu.currentItem,
         new_date: values['end_date'],
       });
@@ -174,7 +174,7 @@ const EnterCodes = () => {
 
   const handleDeleteLoginCode = async () => {
     try {
-      const response = await axios.delete('http://localhost:5000/api/delete_loginCode', {
+      const response = await axios.delete('http://127.0.0.1:5000/api/delete_loginCode', {
         data: { code: contextMenu.currentItem }
       });
       if (response.data.success) {

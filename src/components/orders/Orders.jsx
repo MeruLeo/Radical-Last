@@ -12,7 +12,7 @@ useEffect(() => {
   const fetchOrders = async () => {
     const user_ID = Number(localStorage.getItem('userId')); // Get user_ID from local storage
     try {
-      const response = await axios.get(`http://localhost:5000/api/orders_users?user_ID=${user_ID}`);
+      const response = await axios.get(`http://127.0.0.1:5000/api/orders_users?user_ID=${user_ID}`);
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -74,17 +74,18 @@ useEffect(() => {
   const user_ID = Number(localStorage.getItem('userId'));
 
   const OrderDetails = ({ order }) => {
-    const { ID_loginCode, ID_offerCode, ID_services, service_price, reg_date, disCount_value } = order;
+    const { ID_loginCode, ID_offerCode, ID_services, service_price, reg_date, offer_price } = order;
+    
+    // اطمینان از اینکه disCount_value همیشه یک عدد است
+    const finalDiscountValue = offer_price ? offer_price : 0;
+
     const [service, setService] = useState(null);
 
     useEffect(() => {
       // Fetch service details for the order
       const fetchService = async () => {
         try {
-          const response = await axios.get(`http://localhost:5000/api/service/${ID_services}`);
-          console.log('====================================');
-          console.log(disCount_value);
-          console.log('====================================');
+          const response = await axios.get(`http://127.0.0.1:5000/api/service/${ID_services}`);
           setService(response.data);
         } catch (error) {
           console.error('Error fetching service details:', error);
@@ -122,7 +123,7 @@ useEffect(() => {
             <i className="fi fi-tr-file-invoice-dollar text-2xl text-background-elm flex justify-center items-center"></i>
             <h3 className="mr-4">قیمت نهایی</h3>
           </span>
-          <span>{formatPrice(service_price - disCount_value)}</span>
+          <span>{formatPrice(service_price - finalDiscountValue)}</span>
         </li>
         <li className={`w-full text-background-white flex items-center justify-between h-screen p-4 text-center`}>
           <span className="flex">

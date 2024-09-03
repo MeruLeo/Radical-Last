@@ -1,10 +1,12 @@
 import "./Services.css";
 import { useEffect, useState } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
-import FormComponent from "../form/form";
+import FormComponent from '.././form/form';
 import * as Yup from "yup";
 import Notifcation from "../notifcation/Notifcation";
 import axios from "axios";
+import { Link } from "react-router-dom";
+
 
 const Services = () => {
   const [discount, setDiscount] = useState(Number(localStorage.getItem("discount")) || 0);
@@ -14,7 +16,9 @@ const Services = () => {
   const [ourServices, setOurServices] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [entryCode, setEntryCode] = useState(localStorage.getItem("entercode") || "");
-  const [notification, setNotifcation] = useState(null);
+  const [notification, setNotifcation] = useState(null); 
+
+  
   useEffect(() => {
     localStorage.setItem('offerCode', null);
     localStorage.setItem('discount', null);
@@ -23,7 +27,7 @@ const Services = () => {
   
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/services")
+    fetch("http://127.0.0.1:5000/api/services")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -131,21 +135,21 @@ const Services = () => {
         </section>
       </div>
       <div className="absolute top-[37rem] right-[50%] translate-x-[50%]">
-        <FormComponent 
-        btn={<NormalBtn title={`پرداخت`} />} 
+        <FormComponent
         inputs={componentInputs1}
+        btn={<NormalBtn title={`پرداخت`} />} 
         onSubmit={handleSubmitOrders} />
       </div>
     </div>
   );
 
-  const handleSubmitOrders  = () => {
-    const userId = localStorage.getItem('userId'); // فرض بر اینکه userId در LocalStorage ذخیره شده است
+  const handleSubmitOrders  = async () => {
+    const userId = localStorage.getItem('userId'); 
     const checkedServices = JSON.parse(localStorage.getItem('checkedServices')) || [];
     const entercode = localStorage.getItem('entercode');
     const offerCode = localStorage.getItem('offerCode');
     
-    axios.post("http://127.0.0.1:5000/api/submit_order", {
+    await axios.post("http://127.0.0.1:5000/api/submit_order", {
       userId,
       checkedServices,
       entercode,

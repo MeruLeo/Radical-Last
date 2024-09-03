@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NormalBtn from "../butttons/Normal/NormalBtn";
 import FormComponent from "../form/form";
-import Notifcation from "../notifcation/Notifcation"; // وارد کردن کامپوننت Notifcation
+import Notifcation from "../notifcation/Notifcation";
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
