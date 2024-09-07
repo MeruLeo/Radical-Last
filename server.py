@@ -687,7 +687,6 @@ def delete_offer_code():
     finally:
         cursor.close()
         conn.close()  
-
     
 #-----------------------------------------------------------------------
 @app.route('/api/edit_loginCode', methods=['POST'])
